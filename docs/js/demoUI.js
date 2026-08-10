@@ -61,6 +61,18 @@ window.DemoUI = {
         });
     },
 
+    // 투표만 등록되고 결과는 아직 - 버튼을 지우지 않고 "투표 완료, 대기 중" 상태로 바꿔서
+    // 남은 시간이 자연스럽게 계속 흐르는 걸 보여준다
+    markVoteCast(choice) {
+        if (!this.el) return;
+        const hint = this.el.querySelector('.demo-hint');
+        if (hint) hint.textContent = '✅ 투표 완료! 다른 시청자들과 함께 결과를 기다리는 중...';
+        this.el.querySelectorAll('.demo-btn-choice').forEach(b => {
+            b.disabled = true;
+            if (b.dataset.opt === choice) b.classList.add('demo-btn-selected');
+        });
+    },
+
     hideExploreChoice() {
         if (this.el && this.el.querySelector('.demo-btn-choice')) this.hideAll();
     },
@@ -78,11 +90,11 @@ window.DemoUI = {
               ]
             : [
                 { label: `${attackIcon} ${role.attackLabel} 사용`, act: 'attack' },
-                { label: `${role.utilIcon} ${role.utilCmd.slice(1)} 사용 (방어)`, act: 'defend' }
+                { label: `${role.utilIcon} ${role.utilCmd.slice(1)} 사용`, act: 'defend' }
               ];
 
         this._show(`
-            <div class="demo-hint">당신은 <b>${you.grade_name} ${you.role_name}</b>입니다! 공격하거나 방어해보세요</div>
+            <div class="demo-hint">당신은 <b>${you.grade_name} ${you.role_name}</b>입니다! 상황에 맞는 버튼을 눌러보세요</div>
             <div class="demo-btn-row">
                 ${buttons.map((b, i) => `<button class="demo-btn demo-btn-skill" data-act="${b.act}">${b.label}</button>`).join('')}
             </div>

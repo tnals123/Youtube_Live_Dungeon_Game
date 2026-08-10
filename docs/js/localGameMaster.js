@@ -5,21 +5,22 @@
  * GameSocket(socket.js)이 그걸 받아 각 씬(LobbyScene/DungeonEntryScene/
  * ExploreScene/BattleScene)의 메서드를 호출하는 구조다. 이 클래스는 실제 서버
  * 접속 없이 window.gameSocket 자리에 대신 들어가서, 같은 이벤트들을 정해진
- * 각본(로비 → 던전 입장 → 탐험 갈림길 → 1층 전투 → 클리어)에 맞춰 스스로
- * 만들어 씬에 흘려보낸다. 씬 코드는 실제 서버가 보낸 건지 여기서 만든 건지
- * 구분하지 못한다 (socket.js와 동일한 공개 인터페이스를 흉내냄).
+ * 각본(로비 → 던전 입장 → 1층 전투 → 2층 탐험 갈림길 → 3층 전투(패턴) → 클리어)에
+ * 맞춰 스스로 만들어 씬에 흘려보낸다. 씬 코드는 실제 서버가 보낸 건지 여기서
+ * 만든 건지 구분하지 못한다 (socket.js와 동일한 공개 인터페이스를 흉내냄).
  *
- * 데모 범위: 1층은 보스 패턴(QTE) 없는 "일반 전투"라 가장 단순하게 재현
- * 가능해서 골랐다. 탐험 갈림길은 실제 2층 데이터를 재사용한다.
- * 데미지 공식은 server.py의 공식을 최대한 그대로 따르되, 인원이 훨씬 적은
- * 1인 데모에 맞게 파티 최대HP·회복량 등 일부 상수만 데모용으로 조정했다
+ * 데모 범위: 1층(플러그)은 보스 패턴(QTE) 없는 "일반 전투", 2층은 실제 2층
+ * 탐험 데이터를 재사용, 3층(스크라벤)은 실제 3층 패턴 데이터(파훼 게이지·
+ * 텔레그래프·성공/실패 판정)를 그대로 재현한다.
+ * 데미지/게이지 공식은 server.py의 공식을 최대한 그대로 따르되, 인원이 훨씬
+ * 적은 1인 데모에 맞게 파티 최대HP·회복량 등 일부 상수만 데모용으로 조정했다
  * (주석에 "데모 튜닝"이라고 표시).
  */
 
 // ============ 게임 상수 (backend/server.py의 ROLES/GRADES/ATTACK_SKILLS와 동일) ============
-// util* 필드는 실서버의 UTIL_SKILL_ROLES(보스 패턴 파훼 전용 명령어) - 이 데모의 1층은
-// 패턴 없는 일반 전투라 실제 파훼 게이지는 없지만, 버튼을 누르면 "다음 몬스터 공격 피해
-// 절반 감소" 효과를 줘서 방어 커맨드도 의미 있게 눌러볼 수 있게 했다
+// util* 필드는 실서버의 UTIL_SKILL_ROLES(보스 패턴 파훼 전용 명령어). 1층(플러그)은
+// 패턴이 없어서 이 버튼을 누르면 "다음 몬스터 공격 피해 절반 감소"라는 단순화된
+// 효과만 주고, 3층(스크라벤)에서는 실제 파훼 게이지 점수로 그대로 반영된다
 const LGM_ROLES = {
     warrior: { name: '전사', emoji: '⚔️', weight: 35, attackCmd: '/강타', attackLabel: '강타', coef: 1.2, utilCmd: '/방어', utilIcon: '🛡️' },
     archer:  { name: '궁수', emoji: '🏹', weight: 30, attackCmd: '/저격', attackLabel: '저격', coef: 1.2, utilCmd: '/퇴격', utilIcon: '💨' },
@@ -42,6 +43,22 @@ const LGM_BOT_NAMES = [
     '용사철수', '밤하늘', '구름낚시', '레이드왕', '초코라떼',
     '달빛전사', '느긋한여우', '새벽별', '고구마', '조용한파도'
 ];
+
+// 3층 스크라벤의 실제 파훼 패턴 - backend/dungeons/dark_catacomb.json의
+// floor 3 battle.patterns[0]과 동일한 값 (telegraph/scores/threshold 등)
+const SCRAVEN_PATTERN = {
+    telegraph: '스크라벤이 모든 것을 찢어발길 준비를 합니다.',
+    window_sec: 25,
+    success_threshold: 70,
+    // 커맨드별 게이지 점수 - 양수(방어/퇴격)는 유저당 1회만, 음수(역산/정화)는 칠 때마다 감점
+    scores: { '/방어': 0.5, '/퇴격': 0.3, '/역산': -0.3, '/정화': -0.2 },
+    on_fail: { power_damage_pct: 30 },
+    telegraph_anim: 'idle',
+    resolve_anim: 'attack3',
+    success_anim: 'hit',
+    pattern_interval_sec: 12,  // JSON에 없으면 서버 기본값 12초
+    attack_interval_sec: 4
+};
 
 function lgmWeightedPick(table) {
     const keys = Object.keys(table);
@@ -94,6 +111,20 @@ class LocalGameMaster {
         this._lastClickAt = 0;
         this._shielded = false;
         this._exploreTally = {};
+
+        this._currentFloor = 0;      // 1=플러그, 3=스크라벤 (승리 시 다음 단계 분기용)
+        this._monsterAttackPct = 0;
+        this._monsterAttackText = '';
+        this._monsterAttackChatText = '';
+        this._monsterAttackIn = 0;
+
+        // 보스 패턴(파훼) 상태 - 플러그 층(패턴 없음)에서는 _activePattern이 계속 null
+        this._activePattern = null;
+        this._patternStage = null;   // 'wait' | 'window' | 'result'
+        this._patternTimer = 0;
+        this._patternGaugeTotal = 0;
+        this._patternMaxPossible = 0;
+        this._patternScoredUsers = new Set();
     }
 
     _clearTimers() {
@@ -285,6 +316,35 @@ class LocalGameMaster {
         });
     }
 
+    // ===== 보스 패턴(파훼 QTE) - 3층 스크라벤 전용 =====
+    _firePatternTelegraph(data) {
+        this._safe('pattern_telegraph', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showPatternTelegraph) scene.showPatternTelegraph(data);
+        });
+    }
+
+    _fireGaugeUpdate(gauge) {
+        this._safe('gauge_update', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.updateGauge) scene.updateGauge(gauge);
+        });
+    }
+
+    _firePatternTimer(timer) {
+        this._safe('pattern_timer', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.updatePatternTimer) scene.updatePatternTimer(timer);
+        });
+    }
+
+    _firePatternResult(data) {
+        this._safe('pattern_result', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showPatternResult) scene.showPatternResult(data);
+        });
+    }
+
     _fireBossDefeated(data) {
         this._safe('boss_defeated', () => {
             const scene = this.getActiveScene();
@@ -329,7 +389,7 @@ class LocalGameMaster {
             this._firePhaseChange({ phase: 'lobby' });
             await this._sleep(400);  // 재시작된 경우 create() 끝날 시간 확보
         }
-        this._fireTimerUpdate(8, 'lobby');
+        this._fireTimerUpdate(14, 'lobby');
         this._chatSystem('🎮 로비가 열렸습니다! 채팅으로 /참가 를 입력하면 함께할 수 있어요');
 
         // 등급은 데모가 재밌게 느껴지도록 희귀 이상만 나오게 살짝 편향
@@ -360,7 +420,9 @@ class LocalGameMaster {
             await this._sleep(550);
         }
 
-        for (let t = 7; t >= 0; t--) {
+        // 투표(탐험)와 마찬가지로, 참가 버튼을 눌러도 로비 카운트다운 자체는 끊기지 않고
+        // 끝까지 자연스럽게 흘러간다
+        for (let t = 13; t >= 0; t--) {
             this._fireTimerUpdate(t, 'lobby');
             await this._sleep(700);
         }
@@ -400,13 +462,19 @@ class LocalGameMaster {
     // ============ 2. 던전 입장 브리핑 ============
     async _runDungeonEntry() {
         this._chatSystem('🚪 모집 마감! 파티가 던전에 입장합니다...');
+
+        // 파티 HP는 던전 입장 시 정해져서 1층부터 3층까지 그대로 이어진다 (총 3개 층:
+        // 1층 플러그 전투 → 2층 탐험 → 3층 스크라벤 전투 후 데모 종료)
+        this.partyMaxHp = 3500;
+        this.partyHp = 3500;
+
         this._firePhaseChange({
             phase: 'dungeon',
             floor: 1,
             party_stats: this._computePartyStats(),
             total_power: this._computeTotalPower(),
             mvp_candidates: this._computeMvpCandidates(),
-            monsters: ['플러그']   // 1층 몬스터 스프라이트 미리 로딩용
+            monsters: ['플러그', '스크라벤']   // 이번 던전에서 만날 몬스터 스프라이트 미리 로딩용
         });
 
         // 진형 로스터도 같이 흘려보내 브리핑 화면 이후 씬들이 바로 참조할 수 있게 함
@@ -414,7 +482,7 @@ class LocalGameMaster {
 
         await this._sleep(6000);  // 실제 서버 DUNGEON_ENTRY_SEC(8초)와 비슷하게 맞춘 연출 대기
 
-        this._runExplore();
+        this._runBattlePlug();
     }
 
     _buildFormationRoster() {
@@ -430,15 +498,14 @@ class LocalGameMaster {
         return roster;
     }
 
-    // ============ 3. 탐험 갈림길 (실제 2층 데이터 재사용) ============
+    // ============ 3. 탐험 갈림길 (2층 - 실제 2층 데이터 재사용) ============
     async _runExplore() {
-        this.partyMaxHp = 3500;
-        this.partyHp = 3500;
+        this._currentFloor = 2;
 
         this._firePhaseChange({
             phase: 'explore',
-            floor: 1,
-            banner_text: '갈림길 탐험',
+            floor: 2,
+            banner_text: '2층 갈림길 탐험',
             ambient_sound: '던전소리1.wav',
             ambient_sound_volume: 0.76,
             party_hp: this.partyHp,
@@ -450,14 +517,14 @@ class LocalGameMaster {
         await this._sleep(300);
         this._fireFormationUpdate(this._buildFormationRoster());  // create()가 늦게 끝났을 경우 대비 재전송
 
-        this._exploreResolved = false;
         this._exploreOptions = ['/왼쪽', '/오른쪽'];
         this._exploreTally = { '/왼쪽': 0, '/오른쪽': 0 };
+        this._yourExploreVote = null;  // 실제 서버처럼, 클릭은 "투표"일 뿐 그 자리에서 바로 결과가 나오지 않는다
 
         this._chatSystem('🧭 갈림길 발견! /왼쪽 또는 /오른쪽 을 채팅에 입력해 투표하세요');
 
         this._fireExploreEvent({
-            floor: 1,
+            floor: 2,
             type: 'fork',
             prompt: '갈림길이 나타났다.\n왼쪽에서 바람소리가, 오른쪽에서 물소리가 들린다.',
             options: this._exploreOptions,
@@ -467,11 +534,25 @@ class LocalGameMaster {
             party_max_hp: this.partyMaxHp
         });
 
-        if (window.DemoUI) window.DemoUI.showExploreChoice(this._exploreOptions, (choice) => this._resolveExplore(choice));
+        // 클릭 = 투표 등록만. 실제 서버처럼 제한시간이 다 될 때까지 기다렸다가 다수결로
+        // 판정한다 - 눌렀다고 바로 라운드가 끝나버리지 않는다
+        const castVote = (choice) => {
+            if (this._yourExploreVote) return;
+            this._yourExploreVote = choice;
+            this._chat('당신', choice, { you: true });
+            this._exploreTally[choice] = (this._exploreTally[choice] || 0) + 1;
+            this._fireVoteUpdate({
+                counts: { ...this._exploreTally },
+                voted: Object.values(this._exploreTally).reduce((a, b) => a + b, 0),
+                alive_total: this.bots.length + 1
+            });
+            if (window.DemoUI) window.DemoUI.markVoteCast(choice);
+        };
+
+        if (window.DemoUI) window.DemoUI.showExploreChoice(this._exploreOptions, castVote);
 
         // 봇들도 실제 채팅처럼 각자 다른 타이밍에 투표를 올린다 (정답 쪽으로 살짝 편향된
-        // 랜덤 - "채팅이 대체로 맞는 쪽으로 쏠리는" 느낌을 냄). 투표 자체는 지금 미리
-        // 정해두고, 채팅에 찍히는 시점만 흩어서 보여준다
+        // 랜덤 - "채팅이 대체로 맞는 쪽으로 쏠리는" 느낌을 냄)
         this.bots.forEach(bot => {
             const choice = Math.random() < 0.7 ? '/왼쪽' : '/오른쪽';
             const delay = 500 + Math.random() * 12500;
@@ -486,24 +567,18 @@ class LocalGameMaster {
             }, delay);
         });
 
-        for (let t = 14; t >= 0 && !this._exploreResolved; t--) {
+        // 제한시간이 다 될 때까지 그대로 흘러간다 - 투표했다고 카운트가 끊기지 않는다
+        for (let t = 14; t >= 0; t--) {
             this._fireTimerUpdate(t, 'explore');
             await this._sleep(1000);
-            if (this._exploreResolved) return;
         }
 
-        // 시간 초과 시 정답으로 자동 처리 (혼자 구경만 해도 데모가 자연스럽게 이어지도록)
-        if (!this._exploreResolved) this._resolveExplore('/왼쪽');
+        if (window.DemoUI) window.DemoUI.hideExploreChoice();
+        // 투표 안 했으면 정답으로 자동 처리 (혼자 구경만 해도 데모가 자연스럽게 이어지도록)
+        this._resolveExplore(this._yourExploreVote || '/왼쪽');
     }
 
     _resolveExplore(choice) {
-        if (this._exploreResolved) return;
-        this._exploreResolved = true;
-        if (window.DemoUI) window.DemoUI.hideExploreChoice();
-
-        this._chat('당신', choice, { you: true });
-        this._exploreTally[choice] = (this._exploreTally[choice] || 0) + 1;
-
         const correct = choice === '/왼쪽';
         const outcome = correct
             ? { text: '안전한 길이다. 파티가 조용히 전진한다.', damage_pct: 0, sfx: '5.wav' }
@@ -529,7 +604,7 @@ class LocalGameMaster {
             party_max_hp: this.partyMaxHp
         });
 
-        this._t(() => this._runBattle(), 4500);
+        this._t(() => this._runBattleScraven(), 4500);
     }
 
     _t(fn, delay) {
@@ -538,20 +613,26 @@ class LocalGameMaster {
         return id;
     }
 
-    // ============ 4. 1층 전투 (일반 전투 - 보스 패턴 없음) ============
-    async _runBattle() {
+    // ============ 4. 1층 전투 (플러그 - 일반 전투, 보스 패턴 없음) ============
+    async _runBattlePlug() {
+        this._currentFloor = 1;
+        this._activePattern = null;
+        this._monsterAttackPct = 6.7;  // no_heal_wipe_sec(60)/attack_interval_sec(4) ≈ 15회 → 100/15
+        this._monsterAttackText = '플러그가 전기를 내뿜습니다!';
+        this._monsterAttackChatText = '💢 플러그의 반격! 파티가 피해를 입었다';
+
         this.bossMaxHp = 200000;
         this.bossHp = this.bossMaxHp;
 
         this._firePhaseChange({
             phase: 'boss',
             battle_type: 'normal',
-            floor: 2,
-            floor_total: 2,
+            floor: 1,
+            floor_total: 3,
             boss_name: '플러그',
             boss_emoji: '🐀',
             boss_sprite: '플러그',
-            banner_text: '2층 : 플러그의 습격!',
+            banner_text: '1층 : 플러그의 방',
             intro_sec: 2,
             battle_bgm: 'theme/012 Thunderwave Cave (PMD Blue Rescue Team OST).mp3',
             battle_bgm_volume: 0.45,
@@ -569,6 +650,42 @@ class LocalGameMaster {
         // 실제 전투 루프(_startBattleLoop)를 시작시킨다
     }
 
+    // ============ 5. 3층 전투 (스크라벤 - 실제 파훼 패턴 포함) ============
+    async _runBattleScraven() {
+        this._currentFloor = 3;
+        this._activePattern = SCRAVEN_PATTERN;
+        // no_heal_wipe_sec(30)/attack_interval_sec(4) = 7.5회 → 100/7.5 ≈ 13.3% (플러그보다 훨씬 아픔)
+        this._monsterAttackPct = 13.3;
+        this._monsterAttackText = '스크라벤이 먹잇감을 향해 발톱을 휘두릅니다.';
+        this._monsterAttackChatText = '💢 스크라벤의 발톱 공격! 파티가 피해를 입었다';
+
+        this.bossMaxHp = 260000;
+        this.bossHp = this.bossMaxHp;
+
+        this._firePhaseChange({
+            phase: 'boss',
+            battle_type: 'miniboss',
+            floor: 3,
+            floor_total: 3,
+            boss_name: '스크라벤',
+            boss_emoji: '👾',
+            boss_sprite: '스크라벤',
+            banner_text: '3층 : 스크라벤의 방',
+            intro_sec: 2,
+            battle_bgm: 'theme/068 - Dialgas Fight to the Finish! - (Pokémon Mystery Dungeon - Explorers of Sky).mp3',
+            battle_bgm_volume: 0.43,
+            boss_hp: this.bossHp,
+            boss_max_hp: this.bossMaxHp,
+            party_hp: this.partyHp,
+            party_max_hp: this.partyMaxHp
+        });
+
+        this._chatSystem('👾 스크라벤이 나타났다! 이번엔 패턴 파훼도 함께 대응해야 합니다');
+
+        await this._sleep(300);
+        this._fireFormationUpdate(this._buildFormationRoster());
+    }
+
     _startBattleLoop() {
         if (this._battleRunning) return;
         this._battleRunning = true;
@@ -577,14 +694,25 @@ class LocalGameMaster {
         if (window.DemoUI) window.DemoUI.showSkillButton(this.you, (cmd) => this._youAct(cmd));
 
         // 봇들의 자동 공격 - COMBAT_TICK(0.5초)마다 각자의 공격 주기가 찬 봇들을 모아 배치 발사
+        // (실서버와 동일하게, 패턴 입력 창 중에도 이 자동 공격은 멈추지 않고 계속된다)
         this._fireFormationUpdate(this._buildFormationRoster());  // create()가 늦게 끝났을 경우 대비 재전송
 
         this._battleTick = setInterval(() => this._battleTickFn(), 500);
         this._timers.push(this._battleTick);
 
-        // 몬스터의 파티 공격 - attack_interval_sec(4초)마다 1회
-        this._monsterTick = setInterval(() => this._monsterAttackFn(), 4000);
-        this._timers.push(this._monsterTick);
+        if (this._activePattern) {
+            // 스크라벤: 초 단위 상태머신(대기→텔레그래프/입력창→결과→반복)이 몬스터의
+            // 일반 공격 타이밍까지 함께 관리한다 (몬스터 공격은 'wait' 구간에서만 발동)
+            this._patternStage = 'wait';
+            this._patternTimer = this._activePattern.pattern_interval_sec;
+            this._monsterAttackIn = this._activePattern.attack_interval_sec;
+            this._patternMasterTick = setInterval(() => this._scravenTick(), 1000);
+            this._timers.push(this._patternMasterTick);
+        } else {
+            // 플러그: 패턴이 없어서 몬스터가 그냥 일정 주기로만 공격
+            this._monsterTick = setInterval(() => this._monsterAttackFn(), 4000);
+            this._timers.push(this._monsterTick);
+        }
 
         // 안전장치: 90초가 지나도 승부가 안 나면 강제로 몬스터를 쓰러뜨려서 데모가
         // 끝없이 늘어지지 않게 함 (클릭을 전혀 안 해도 결국 승리 화면을 보게 됨)
@@ -595,6 +723,176 @@ class LocalGameMaster {
             }
         }, 90000);
         this._timers.push(this._safetyTimer);
+    }
+
+    // ============ 3층 전용: 패턴 상태머신 (1초 틱) ============
+    _scravenTick() {
+        if (!this._battleRunning) return;
+
+        if (this._patternStage === 'wait') {
+            this._monsterAttackIn--;
+            if (this._monsterAttackIn <= 0) {
+                this._monsterAttackIn = this._activePattern.attack_interval_sec;
+                this._monsterAttackFn();
+            }
+            this._patternTimer--;
+            if (this._patternTimer <= 0) this._beginPattern();
+
+        } else if (this._patternStage === 'window') {
+            this._patternTimer--;
+            this._firePatternTimer(Math.max(0, this._patternTimer));
+            if (this._patternTimer <= 0) this._resolvePattern();
+
+        } else if (this._patternStage === 'result') {
+            this._patternTimer--;
+            if (this._patternTimer <= 0) {
+                this._patternStage = 'wait';
+                this._patternTimer = this._activePattern.pattern_interval_sec;
+            }
+        }
+    }
+
+    _beginPattern() {
+        const pat = this._activePattern;
+        this._patternStage = 'window';
+        this._patternTimer = pat.window_sec;
+        this._patternGaugeTotal = 0;
+        this._patternScoredUsers = new Set();
+        this._patternMaxPossible = this._computePatternMax(pat);
+
+        this._chatSystem('⚡ ' + pat.telegraph);
+        this._firePatternTelegraph({
+            telegraph: pat.telegraph,
+            window: pat.window_sec,
+            threshold: pat.success_threshold,
+            telegraph_anim: pat.telegraph_anim,
+            telegraph_sfx: pat.telegraph_sfx,
+            telegraph_sfx_volume: pat.telegraph_sfx_volume,
+            telegraph_loop_sound: pat.telegraph_loop_sound,
+            telegraph_loop_sound_volume: pat.telegraph_loop_sound_volume,
+            hints: this._computePatternHints(pat)
+        });
+
+        // 봇들도 실제 채팅처럼, 자기 역할의 "정답" 커맨드가 있으면 창 안에서 랜덤한
+        // 타이밍에 제출한다 (일부러 오답을 내진 않음 - 데모가 매번 막히면 곤란하니까)
+        this.bots.forEach(bot => {
+            if (!bot.alive) return;
+            const role = LGM_ROLES[bot.role];
+            const candidates = [role.utilCmd, role.attackCmd].filter(Boolean);
+            let bestCmd = null, bestScore = 0;
+            candidates.forEach(c => { const s = pat.scores[c] || 0; if (s > bestScore) { bestScore = s; bestCmd = c; } });
+            if (!bestCmd || Math.random() >= 0.7) return;
+
+            const delay = 800 + Math.random() * Math.max(500, pat.window_sec * 1000 - 1500);
+            this._t(() => {
+                if (this._patternStage !== 'window') return;
+                this._chat(bot.name, bestCmd);
+                this._fireSkillUsed({ user_id: bot.user_id, command: bestCmd });
+                this._applyPatternScore(bot, bestCmd);
+            }, delay);
+        });
+    }
+
+    // 이 패턴에서 각 역할이 낼 수 있는 커맨드 중 "가장 높은 양수 점수"만 힌트로 보여준다
+    // (실서버와 동일 - 이 패턴에서 양수 옵션이 없는 역할(마법사/힐러)은 힌트 자체가 없음)
+    _computePatternHints(pat) {
+        const hints = [];
+        Object.keys(LGM_ROLES).forEach(r => {
+            const role = LGM_ROLES[r];
+            const candidates = [role.utilCmd, role.attackCmd, r === 'healer' ? '/힐' : null].filter(Boolean);
+            let bestCmd = null, bestScore = 0;
+            candidates.forEach(c => { const s = pat.scores[c] || 0; if (s > bestScore) { bestScore = s; bestCmd = c; } });
+            if (bestCmd) hints.push({ role: r, command: bestCmd });
+        });
+        return hints;
+    }
+
+    // max_possible = 생존 참가자 전원의 "역할별 최선의 양수 점수 x 등급 배율" 합
+    _computePatternMax(pat) {
+        let total = 0;
+        this._allUnits().forEach(u => {
+            if (!u.alive) return;
+            const role = LGM_ROLES[u.role];
+            const candidates = [role.utilCmd, role.attackCmd, u.role === 'healer' ? '/힐' : null].filter(Boolean);
+            let best = 0;
+            candidates.forEach(c => { const s = pat.scores[c] || 0; if (s > best) best = s; });
+            total += best * LGM_GRADES[u.grade].multiplier;
+        });
+        return total;
+    }
+
+    _computeGauge() {
+        if (!this._patternMaxPossible || this._patternMaxPossible <= 0) return 0;
+        const raw = this._patternGaugeTotal / this._patternMaxPossible * 100;
+        return Math.max(0, Math.min(100, Math.round(raw * 10) / 10));
+    }
+
+    // 유닛이 패턴 입력창 동안 커맨드를 냈을 때 게이지에 반영 (양수는 유저당 1회만,
+    // 음수는 낼 때마다 계속 감점 - 실서버와 동일)
+    _applyPatternScore(unit, command) {
+        const pat = this._activePattern;
+        if (!pat || this._patternStage !== 'window') return;
+
+        const score = pat.scores[command] || 0;
+        if (score > 0) {
+            if (this._patternScoredUsers.has(unit.user_id)) return;
+            this._patternScoredUsers.add(unit.user_id);
+            this._patternGaugeTotal += score * LGM_GRADES[unit.grade].multiplier;
+        } else if (score < 0) {
+            this._patternGaugeTotal += score;
+        } else {
+            return;  // 이 패턴과 무관한 커맨드 - 게이지 변화 없음
+        }
+
+        const gauge = this._computeGauge();
+        this._fireGaugeUpdate(gauge);
+
+        // 성공선에 도달하면 남은 시간과 무관하게 즉시 파훼
+        if (gauge >= pat.success_threshold) this._resolvePattern();
+    }
+
+    _resolvePattern() {
+        if (this._patternStage !== 'window') return;  // 이미 판정됐으면 중복 방지
+        const pat = this._activePattern;
+        const gauge = this._computeGauge();
+        const success = gauge >= pat.success_threshold;
+
+        this._patternStage = 'result';
+        this._patternTimer = 5;  // 실서버 PATTERN_RESULT_SEC
+
+        if (success) {
+            this._chatSystem('✅ 패턴 파훼 성공!');
+            this._firePatternResult({
+                success: true,
+                gauge,
+                text: '패턴을 파훼했다!',
+                damage_pct: 0,
+                damage: 0,
+                success_anim: pat.success_anim,
+                party_hp: this.partyHp,
+                party_max_hp: this.partyMaxHp
+            });
+        } else {
+            // 실패 피해 = 설정된 최대% x (1 - 게이지/100) - 게이지를 많이 채웠을수록 덜 아프다
+            const basePct = pat.on_fail.power_damage_pct;
+            const actualPct = basePct * (1 - gauge / 100);
+            const damage = Math.round(this.partyMaxHp * (actualPct / 100));
+            this.partyHp = Math.max(0, this.partyHp - damage);
+
+            this._chatSystem('❌ 패턴 파훼 실패...');
+            this._firePatternResult({
+                success: false,
+                gauge,
+                text: '패턴을 막지 못했다!',
+                damage_pct: Math.round(actualPct * 10) / 10,
+                damage,
+                resolve_anim: pat.resolve_anim,
+                party_hp: this.partyHp,
+                party_max_hp: this.partyMaxHp
+            });
+        }
+
+        this._checkBattleEnd();
     }
 
     _rollDamage(grade, coef) {
@@ -651,23 +949,23 @@ class LocalGameMaster {
 
     _monsterAttackFn() {
         if (!this._battleRunning) return;
-        let pct = 6.7; // no_heal_wipe_sec(60) / attack_interval_sec(4) = 15회 → 100/15 ≈ 6.7%
+        let pct = this._monsterAttackPct;
 
-        // 방어/역산/퇴격 버튼으로 미리 방어 태세였다면 이번 공격 피해를 절반으로 줄인다
-        // (실서버의 "패턴 파훼 성공" 개념을 1층 일반 전투용으로 단순화한 것)
+        // 1층(플러그)에서만 쓰이는 단순화된 방어: 방어 버튼을 눌러뒀으면 이번 공격 피해를
+        // 절반으로 줄인다. 3층(스크라벤)은 이 플래그를 아예 안 쓰고 진짜 패턴으로 방어한다
         if (this._shielded) {
             pct = Math.round(pct / 2 * 10) / 10;
             this._shielded = false;
             this._chatSystem('🛡️ 방어 태세 덕분에 피해가 절반으로 줄었다!');
         } else {
-            this._chatSystem('💢 플러그의 반격! 파티가 피해를 입었다');
+            this._chatSystem(this._monsterAttackChatText);
         }
 
         const damage = Math.round(this.partyMaxHp * (pct / 100));
         this.partyHp = Math.max(0, this.partyHp - damage);
 
         this._fireMonsterAttack({
-            text: '플러그가 전기를 내뿜습니다!',
+            text: this._monsterAttackText,
             damage_pct: pct,
             damage,
             party_hp: this.partyHp,
@@ -685,14 +983,26 @@ class LocalGameMaster {
         this._lastClickAt = now;
 
         const role = LGM_ROLES[this.you.role];
+        const patternWindowOpen = this._activePattern && this._patternStage === 'window';
 
         if (cmd === 'defend') {
-            // 공격/힐과 달리 몬스터 HP나 파티 HP를 즉시 바꾸지 않고, 다음 몬스터 공격을
-            // 절반으로 줄이는 방어 태세만 켠다 (_monsterAttackFn에서 소모됨)
-            this._shielded = true;
             this._chat('당신', role.utilCmd, { you: true });
-            this._chatSystem('🛡️ 당신이 방어 태세를 취했다! 다음 공격 피해 감소');
-            this._fireSkillUsed({ user_id: this.you.user_id, command: role.utilCmd });
+
+            if (this._activePattern) {
+                // 3층: 실서버와 동일하게, 패턴 입력창이 열려 있을 때만 애니메이션+게이지 반영
+                // (이 역할에게 지금 패턴이 정답/오답/무관일 수 있음)
+                if (patternWindowOpen) {
+                    this._fireSkillUsed({ user_id: this.you.user_id, command: role.utilCmd });
+                    this._applyPatternScore(this.you, role.utilCmd);
+                } else {
+                    this._chatSystem('（지금은 패턴 입력 시간이 아니라 효과가 없습니다）');
+                }
+            } else {
+                // 1층: 패턴이 없어서 대신 다음 몬스터 공격 피해를 절반으로 줄이는 단순 방어
+                this._fireSkillUsed({ user_id: this.you.user_id, command: role.utilCmd });
+                this._shielded = true;
+                this._chatSystem('🛡️ 당신이 방어 태세를 취했다! 다음 공격 피해 감소');
+            }
         } else if (cmd === 'heal') {
             const amount = Math.round(LGM_GRADES[this.you.grade].multiplier * (8 + Math.random() * 6));
             this.partyHp = Math.min(this.partyMaxHp, this.partyHp + amount);
@@ -705,6 +1015,7 @@ class LocalGameMaster {
                 party_hp: this.partyHp,
                 party_max_hp: this.partyMaxHp
             });
+            if (patternWindowOpen) this._applyPatternScore(this.you, '/힐');
         } else {
             const { damage, damage_type } = this._rollDamage(this.you.grade, role.coef);
             this.bossHp = Math.max(0, this.bossHp - damage);
@@ -720,6 +1031,7 @@ class LocalGameMaster {
                 party_hp: this.partyHp,
                 party_max_hp: this.partyMaxHp
             });
+            if (patternWindowOpen) this._applyPatternScore(this.you, role.attackCmd);
         }
 
         this._checkBattleEnd();
@@ -747,22 +1059,34 @@ class LocalGameMaster {
             this._battleRunning = false;
             this._clearBattleTimers();
             if (window.DemoUI) window.DemoUI.hideSkillButton();
-            this._chatSystem('🏆 던전 클리어!! 수고하셨습니다');
 
-            // 실서버는 "마지막 층 클리어"일 때 boss_defeated 대신 dungeon_clear를
-            // 단독으로 보낸다(결과 화면이 두 번 겹쳐 뜨지 않게). 데모는 층이 하나뿐이라
-            // 이 전투가 곧 마지막 층이므로 dungeon_clear만 보낸다.
-            this._fireDungeonClear({
-                dungeon_name: '어둠의 지하묘지 (데모)',
-                end_message: '데모 플레이를 완료했습니다! 실제 라이브 버전은 유튜브 채팅으로\n수십~수백 명이 함께 진행합니다.',
-                ranking: this._buildRanking(),
-                fade_bgm_on_clear: true,
-                fade_bgm_duration_sec: 2
-            });
+            if (this._currentFloor === 1) {
+                // 1층(플러그) 클리어 - 실서버처럼 마지막 층이 아니면 boss_defeated로 다음
+                // 층(탐험)까지만 안내하고, dungeon_clear는 진짜 마지막 층에서만 보낸다
+                this._chatSystem('🏆 1층 클리어! 다음 층으로 이동합니다');
+                this._fireBossDefeated({
+                    floor: 1,
+                    next_floor: 2,
+                    ranking: this._buildRanking(),
+                    fade_bgm_on_clear: true,
+                    fade_bgm_duration_sec: 2
+                });
+                this._t(() => this._runExplore(), 4000);
 
-            this._t(() => {
-                if (window.DemoUI) window.DemoUI.showRestart();
-            }, 4000);
+            } else {
+                // 3층(스크라벤) 클리어 - 이번 데모의 진짜 마지막 층
+                this._chatSystem('🏆 던전 클리어!! 수고하셨습니다');
+                this._fireDungeonClear({
+                    dungeon_name: '어둠의 지하묘지 (데모)',
+                    end_message: '데모 플레이를 완료했습니다! 실제 라이브 버전은 유튜브 채팅으로\n수십~수백 명이 함께 진행합니다.',
+                    ranking: this._buildRanking(),
+                    fade_bgm_on_clear: true,
+                    fade_bgm_duration_sec: 2
+                });
+                this._t(() => {
+                    if (window.DemoUI) window.DemoUI.showRestart();
+                }, 4000);
+            }
 
         } else if (this.partyHp <= 0) {
             this._battleRunning = false;
@@ -770,7 +1094,7 @@ class LocalGameMaster {
             if (window.DemoUI) window.DemoUI.hideSkillButton();
             this._chatSystem('💀 파티 전멸... 다시 도전해보세요');
 
-            this._firePartyWiped({ floor: 2, ranking: this._buildRanking() });
+            this._firePartyWiped({ floor: this._currentFloor, ranking: this._buildRanking() });
 
             this._t(() => {
                 if (window.DemoUI) window.DemoUI.showRestart();
@@ -781,6 +1105,7 @@ class LocalGameMaster {
     _clearBattleTimers() {
         clearInterval(this._battleTick);
         clearInterval(this._monsterTick);
+        clearInterval(this._patternMasterTick);
         clearTimeout(this._safetyTimer);
     }
 }
