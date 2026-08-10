@@ -89,7 +89,7 @@ class LocalGameMaster {
         this.bossMaxHp = 0;
         this._battleRunning = false;
         this._lastClickAt = 0;
-        this._voteCounts = {};
+        this._exploreTally = {};
     }
 
     _clearTimers() {
@@ -139,6 +139,10 @@ class LocalGameMaster {
         const scene = window.game.scene.getScene(key);
         return (scene && scene.scene.isActive()) ? scene : null;
     }
+
+    // 실제 유튜브 라이브 채팅처럼 보이게, 봇/당신의 명령어를 오른쪽 채팅 로그에도 같이 찍는다
+    _chat(name, text, opts) { if (window.ChatLog) window.ChatLog.post(name, text, opts); }
+    _chatSystem(text) { if (window.ChatLog) window.ChatLog.postSystem(text); }
 
     // ============ 관리용 no-op (실서버 전용 기능 - 데모에선 아무 것도 안 함) ============
     startYoutube() {}
@@ -297,6 +301,7 @@ class LocalGameMaster {
     restart() {
         this._clearTimers();
         if (window.DemoUI) window.DemoUI.hideAll();
+        if (window.ChatLog) window.ChatLog.clear();
         this._resetState();
         this._runLobby().catch(e => console.error('[LocalGameMaster] 데모 진행 중 오류:', e));
     }
@@ -311,6 +316,7 @@ class LocalGameMaster {
             await this._sleep(400);  // 재시작된 경우 create() 끝날 시간 확보
         }
         this._fireTimerUpdate(8, 'lobby');
+        this._chatSystem('🎮 로비가 열렸습니다! 채팅으로 /참가 를 입력하면 함께할 수 있어요');
 
         // 등급은 데모가 재밌게 느껴지도록 희귀 이상만 나오게 살짝 편향
         this.you = lgmMakeUnit('당신', 'demo_you', null, lgmWeightedPick({
@@ -327,6 +333,7 @@ class LocalGameMaster {
             this._youJoined = true;
             this._firePlayerJoined(this.you);
             this._firePartyStats(this._computePartyStats());
+            this._chat('당신', '/참가', { you: true });
             if (window.DemoUI) window.DemoUI.hideJoinButton();
         };
 
@@ -335,6 +342,7 @@ class LocalGameMaster {
         for (let i = 0; i < this.bots.length; i++) {
             this._firePlayerJoined(this.bots[i]);
             this._firePartyStats(this._computePartyStats());
+            this._chat(this.bots[i].name, '/참가');
             await this._sleep(550);
         }
 
@@ -377,6 +385,7 @@ class LocalGameMaster {
 
     // ============ 2. 던전 입장 브리핑 ============
     async _runDungeonEntry() {
+        this._chatSystem('🚪 모집 마감! 파티가 던전에 입장합니다...');
         this._firePhaseChange({
             phase: 'dungeon',
             floor: 1,
@@ -429,7 +438,9 @@ class LocalGameMaster {
 
         this._exploreResolved = false;
         this._exploreOptions = ['/왼쪽', '/오른쪽'];
-        this._voteCounts = { '/왼쪽': 0, '/오른쪽': 0 };
+        this._exploreTally = { '/왼쪽': 0, '/오른쪽': 0 };
+
+        this._chatSystem('🧭 갈림길 발견! /왼쪽 또는 /오른쪽 을 채팅에 입력해 투표하세요');
 
         this._fireExploreEvent({
             floor: 1,
@@ -443,6 +454,23 @@ class LocalGameMaster {
         });
 
         if (window.DemoUI) window.DemoUI.showExploreChoice(this._exploreOptions, (choice) => this._resolveExplore(choice));
+
+        // 봇들도 실제 채팅처럼 각자 다른 타이밍에 투표를 올린다 (정답 쪽으로 살짝 편향된
+        // 랜덤 - "채팅이 대체로 맞는 쪽으로 쏠리는" 느낌을 냄). 투표 자체는 지금 미리
+        // 정해두고, 채팅에 찍히는 시점만 흩어서 보여준다
+        this.bots.forEach(bot => {
+            const choice = Math.random() < 0.7 ? '/왼쪽' : '/오른쪽';
+            const delay = 500 + Math.random() * 12500;
+            this._t(() => {
+                this._exploreTally[choice]++;
+                this._chat(bot.name, choice);
+                this._fireVoteUpdate({
+                    counts: { ...this._exploreTally },
+                    voted: Object.values(this._exploreTally).reduce((a, b) => a + b, 0),
+                    alive_total: this.bots.length + 1
+                });
+            }, delay);
+        });
 
         for (let t = 14; t >= 0 && !this._exploreResolved; t--) {
             this._fireTimerUpdate(t, 'explore');
@@ -459,21 +487,18 @@ class LocalGameMaster {
         this._exploreResolved = true;
         if (window.DemoUI) window.DemoUI.hideExploreChoice();
 
-        const correct = choice === '/왼쪽';
-        // 나머지 참가자들의 표는 그럴듯하게 당신 쪽으로 쏠리게 채움 (실제론 다수결 투표)
-        const total = 1 + this.bots.length;
-        const majority = Math.max(1, Math.round(total * 0.7));
-        this._voteCounts = {
-            '/왼쪽': choice === '/왼쪽' ? majority : total - majority,
-            '/오른쪽': choice === '/오른쪽' ? majority : total - majority
-        };
+        this._chat('당신', choice, { you: true });
+        this._exploreTally[choice] = (this._exploreTally[choice] || 0) + 1;
 
+        const correct = choice === '/왼쪽';
         const outcome = correct
             ? { text: '안전한 길이다. 파티가 조용히 전진한다.', damage_pct: 0, sfx: '5.wav' }
             : { text: '바닥이 무너진다! 함정이다!', damage_pct: 10, sfx: '바닥무너짐1.wav' };
 
         const damage = Math.round(this.partyMaxHp * (outcome.damage_pct / 100));
         this.partyHp = Math.max(0, this.partyHp - damage);
+
+        this._chatSystem((correct ? '✅ ' : '❌ ') + outcome.text);
 
         this._fireExploreResult({
             choice: choice,
@@ -482,7 +507,7 @@ class LocalGameMaster {
             damage_pct: outcome.damage_pct,
             damage: damage,
             reward: null,
-            counts: this._voteCounts,
+            counts: { ...this._exploreTally },
             sfx: outcome.sfx,
             fade_bgm_on_clear: true,
             fade_bgm_duration_sec: 3,
@@ -521,6 +546,8 @@ class LocalGameMaster {
             party_hp: this.partyHp,
             party_max_hp: this.partyMaxHp
         });
+
+        this._chatSystem('⚔️ 플러그가 나타났다! 스킬 버튼으로 함께 공격하세요');
 
         await this._sleep(300);
         this._fireFormationUpdate(this._buildFormationRoster());
@@ -582,6 +609,7 @@ class LocalGameMaster {
                 this.partyHp = Math.min(this.partyMaxHp, this.partyHp + amount);
                 u.totalHeal += amount;
                 heals.push({ user_id: u.user_id, name: u.name, amount });
+                this._chat(u.name, '/힐');
             } else {
                 const role = LGM_ROLES[u.role];
                 const { damage, damage_type } = this._rollDamage(u.grade, role.coef);
@@ -591,6 +619,7 @@ class LocalGameMaster {
                     user_id: u.user_id, name: u.name, role: u.role, grade: u.grade,
                     skill: role.attackLabel, damage, damage_type
                 });
+                this._chat(u.name, role.attackCmd);
             }
         });
 
@@ -611,6 +640,7 @@ class LocalGameMaster {
         const pct = 6.7; // no_heal_wipe_sec(60) / attack_interval_sec(4) = 15회 → 100/15 ≈ 6.7%
         const damage = Math.round(this.partyMaxHp * (pct / 100));
         this.partyHp = Math.max(0, this.partyHp - damage);
+        this._chatSystem('💢 플러그의 반격! 파티가 피해를 입었다');
 
         this._fireMonsterAttack({
             text: '플러그가 전기를 내뿜습니다!',
@@ -636,6 +666,7 @@ class LocalGameMaster {
             const amount = Math.round(LGM_GRADES[this.you.grade].multiplier * (8 + Math.random() * 6));
             this.partyHp = Math.min(this.partyMaxHp, this.partyHp + amount);
             this.you.totalHeal += amount;
+            this._chat('당신', '/힐', { you: true });
             this._fireAttackBatch({
                 attacks: [],
                 heals: [{ user_id: this.you.user_id, name: this.you.name, amount }],
@@ -647,6 +678,7 @@ class LocalGameMaster {
             const { damage, damage_type } = this._rollDamage(this.you.grade, role.coef);
             this.bossHp = Math.max(0, this.bossHp - damage);
             this.you.totalDamage += damage;
+            this._chat('당신', role.attackCmd, { you: true });
             this._fireAttackBatch({
                 attacks: [{
                     user_id: this.you.user_id, name: this.you.name, role: this.you.role,
@@ -684,6 +716,7 @@ class LocalGameMaster {
             this._battleRunning = false;
             this._clearBattleTimers();
             if (window.DemoUI) window.DemoUI.hideSkillButton();
+            this._chatSystem('🏆 던전 클리어!! 수고하셨습니다');
 
             // 실서버는 "마지막 층 클리어"일 때 boss_defeated 대신 dungeon_clear를
             // 단독으로 보낸다(결과 화면이 두 번 겹쳐 뜨지 않게). 데모는 층이 하나뿐이라
@@ -704,6 +737,7 @@ class LocalGameMaster {
             this._battleRunning = false;
             this._clearBattleTimers();
             if (window.DemoUI) window.DemoUI.hideSkillButton();
+            this._chatSystem('💀 파티 전멸... 다시 도전해보세요');
 
             this._firePartyWiped({ floor: 2, ranking: this._buildRanking() });
 

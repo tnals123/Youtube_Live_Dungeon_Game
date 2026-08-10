@@ -135,6 +135,111 @@
             max-width: 440px;
         }
         footer a { color: #6EC1FF; text-decoration: none; }
+
+        /* ===== 레이아웃: 게임 열 + 채팅 열 (좁은 화면에선 세로로 쌓임) ===== */
+        .layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .game-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* ===== 가짜 유튜브 라이브 채팅 ===== */
+        #chat-panel {
+            width: min(300px, 94vw);
+            height: min(72vh, 660px);
+            background: #0f0f0f;
+            border: 2px solid #303030;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chat-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 13px;
+            font-weight: bold;
+            color: #eee;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        #chat-header .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #FF3B3B;
+            box-shadow: 0 0 6px #FF3B3B;
+            animation: pulse 1.4s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .chat-msg {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 12.5px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .chat-avatar {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            color: #111;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-name { font-weight: bold; flex-shrink: 0; }
+        .chat-text { color: #ddd; }
+
+        .chat-you {
+            background: rgba(255, 215, 0, 0.08);
+            border-radius: 6px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+        }
+        .chat-you .chat-text { color: #FFE9C9; }
+
+        .chat-system {
+            text-align: center;
+            font-size: 11.5px;
+            color: #999;
+            font-style: italic;
+            padding: 2px 0;
+        }
     </style>
 </head>
 <body>
@@ -151,11 +256,19 @@
         </p>
     </header>
 
-    <div id="stage-wrap">
-        <div id="game-container"></div>
-    </div>
+    <div class="layout">
+        <div class="game-col">
+            <div id="stage-wrap">
+                <div id="game-container"></div>
+            </div>
+            <div id="demo-controls"></div>
+        </div>
 
-    <div id="demo-controls"></div>
+        <div id="chat-panel">
+            <div id="chat-header"><span class="dot"></span> 실시간 채팅 (재현)</div>
+            <div id="chat-messages"></div>
+        </div>
+    </div>
 
     <footer>
         전체 소스 코드 · 실시간(라이브) 버전 안내는
@@ -179,6 +292,7 @@
     <script src="js/scenes/BattleScene.js"></script>
     <script src="js/game.js"></script>
     <script src="js/demoUI.js"></script>
+    <script src="js/chatLog.js"></script>
 
     <script>
         // Phaser 게임 인스턴스(game.js가 만듦)가 준비되는 대로 데모 각본을 시작한다
