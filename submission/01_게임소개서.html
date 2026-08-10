@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>던전 레이드 - 게임 소개 및 설명 문서</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    color: #1a1a1a;
+    line-height: 1.65;
+    font-size: 14px;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    background: #fff;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 4px;
+    color: #16324f;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: #555;
+    margin-bottom: 18px;
+  }
+  .oneliner {
+    background: #f4f7fb;
+    border-left: 4px solid #2a6fdb;
+    padding: 12px 16px;
+    margin: 18px 0 28px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #16324f;
+  }
+  h2 {
+    font-size: 18px;
+    color: #16324f;
+    border-bottom: 2px solid #16324f;
+    padding-bottom: 6px;
+    margin: 34px 0 12px;
+  }
+  h3 {
+    font-size: 15px;
+    color: #2a6fdb;
+    margin: 20px 0 8px;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0 10px; padding-left: 22px; }
+  li { margin: 4px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 16px;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #d8dde3;
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #eef2f7;
+    color: #16324f;
+  }
+  code {
+    background: #f0f0f0;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #b13a00;
+  }
+  .flow-step {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+  }
+  .flow-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #2a6fdb;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .link-box {
+    background: #f4f7fb;
+    border: 1px solid #d8dde3;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 10px 0;
+  }
+  .link-box .label { font-weight: 600; color: #16324f; font-size: 13px; margin-bottom: 4px; }
+  .link-box a { color: #2a6fdb; word-break: break-all; }
+  .note {
+    font-size: 12.5px;
+    color: #777;
+    font-style: italic;
+    margin-top: 6px;
+  }
+  .placeholder {
+    color: #b00020;
+    font-weight: 600;
+  }
+  .feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0 18px;
+  }
+  .feature-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: #fafbfc;
+    border: 1px solid #e4e8ed;
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .feature-icon {
+    font-size: 21px;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+  .feature-body b {
+    display: block;
+    color: #16324f;
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .feature-body span {
+    display: block;
+    font-size: 13px;
+    color: #3a3a3a;
+    line-height: 1.6;
+  }
+  .concept-line {
+    text-align: center;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #16324f;
+    padding: 14px 10px;
+    margin: 20px 0 6px;
+    border-top: 1px solid #d8dde3;
+    border-bottom: 1px solid #d8dde3;
+  }
+  footer {
+    margin-top: 40px;
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+    font-size: 11.5px;
+    color: #999;
+    text-align: center;
+  }
+  @media print {
+    body { padding: 0; }
+    h2 { page-break-after: avoid; }
+    table, .link-box { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🏰 던전 레이드 (Dungeon Raid)</h1>
+<div class="subtitle">게임 소개 및 설명 문서</div>
+
+<div class="oneliner">
+  유튜브 라이브 방송 시청자들이 채팅창에 명령어를 입력해 실시간으로 파티를 이루고,
+  함께 몬스터를 쓰러뜨리며 던전을 공략하는 시청자 참여형 인터랙티브 게임입니다.
+</div>
+
+<h2>게임 소개</h2>
+<p>
+  "던전 레이드"는 별도의 게임 클라이언트 설치나 컨트롤러 없이, 오직 <b>유튜브 라이브 채팅</b>만으로
+  진행되는 시청자 참여형 게임입니다. 시청자는 화면 속 캐릭터를 직접 조작하는 대신, 채팅창에
+  명령어를 입력하는 것만으로 게임 세계에 실시간으로 개입합니다.
+</p>
+
+<div class="feature-list">
+  <div class="feature-item">
+    <div class="feature-icon">🎮</div>
+    <div class="feature-body">
+      <b>채팅으로 캐릭터 조작</b>
+      <span>유튜브 라이브 채팅창에 명령어를 입력함으로써 본인의 캐릭터를 움직이고 전투에 참여합니다.</span>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon">🎲</div>
+    <div class="feature-body">
+      <b>직업과 등급 랜덤 배정</b>
+      <span><code>/참가</code>를 입력하면 전사·궁수·마법사·힐러 중 하나의 직업과, 일반부터 전설까지 5단계 중 하나의 등급을 무작위로 부여받습니다. 등급이 높을수록 전투력이 높습니다.</span>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon">🗳️</div>
+    <div class="feature-body">
+      <b>탐험 이벤트 투표</b>
+      <span>갈림길이나 상자 같은 이벤트가 나오면 채팅 다수결로 선택지를 정합니다. 정답을 고르면 안전하게 지나가고, 오답을 고르면 함정에 걸려 피해를 입습니다.</span>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon">⚡</div>
+    <div class="feature-body">
+      <b>보스 패턴 대응</b>
+      <span>보스가 패턴을 예고하면 제한시간 안에 자신의 직업에 맞는 방어 명령어를 입력해야 합니다. 충분히 모이면 피해를 막고, 부족하면 파티 전체가 피해를 입습니다.</span>
+    </div>
+  </div>
+</div>
+
+<div class="concept-line">
+  실제 방송에서는 스트리머 한 명과 시청자 여러 명이 채팅으로 함께 던전을 진행합니다.
+</div>
+
+<h2>게임 방법</h2>
+
+<h3>목표</h3>
+<p>파티(참여한 시청자 전원)가 힘을 합쳐 던전의 모든 층을 순서대로 클리어하고, 최종 보스까지 무찔러 던전을 정복하는 것입니다.</p>
+
+<h3>조작 (실제 라이브 버전 기준)</h3>
+<p>모든 조작은 유튜브 라이브 채팅창에 아래 명령어를 입력하는 것으로 이루어집니다.</p>
+<table>
+  <tr><th>명령어</th><th>설명</th></tr>
+  <tr><td><code>/참가</code></td><td>파티에 합류 (직업·등급 무작위 배정)</td></tr>
+  <tr><td><code>/왼쪽</code>, <code>/오른쪽</code> 등</td><td>탐험 이벤트(갈림길 등)에서 선택지 투표</td></tr>
+  <tr><td><code>/강타</code> (전사) · <code>/저격</code> (궁수) · <code>/파이어볼</code> (마법사) · <code>/정화</code> (힐러)</td><td>직업별 공격 명령어 - 반복 입력할수록 자주 공격</td></tr>
+  <tr><td><code>/힐</code></td><td>힐러 전용 파티 회복 명령어</td></tr>
+  <tr><td><code>/방어</code> (전사) · <code>/퇴격</code> (궁수) · <code>/역산</code> (마법사)</td><td>보스 패턴 예고 시 파훼 게이지를 채우는 방어 명령어</td></tr>
+</table>
+
+<h3>직업 · 등급 시스템</h3>
+<table>
+  <tr><th>직업</th><th>공격 스킬</th><th>패턴 방어 스킬</th></tr>
+  <tr><td>⚔️ 전사</td><td>강타</td><td>방어</td></tr>
+  <tr><td>🏹 궁수</td><td>저격</td><td>퇴격</td></tr>
+  <tr><td>🔮 마법사</td><td>파이어볼</td><td>역산</td></tr>
+  <tr><td>💚 힐러</td><td>정화 (공격) / 힐 (회복)</td><td>-</td></tr>
+</table>
+<p>등급은 일반 → 고급 → 희귀 → 영웅 → 전설 순으로 희귀할수록 전투력 배율이 크게 올라갑니다 (일반 대비 전설은 최대 100배). 등급이 높은 소수 인원이 파티 전체를 캐리하는 것도 가능해, 누가 어떤 등급을 뽑는지도 매 방송마다 관전 포인트가 됩니다.</p>
+
+<h3>진행 흐름</h3>
+<div class="flow-step"><div class="flow-num">1</div><div><b>로비</b> - 일정 시간 동안 <code>/참가</code>로 시청자를 모집합니다.</div></div>
+<div class="flow-step"><div class="flow-num">2</div><div><b>던전 입장 브리핑</b> - 파티 구성, 총 전투력, MVP 후보를 보여줍니다.</div></div>
+<div class="flow-step"><div class="flow-num">3</div><div><b>탐험 층</b> - 갈림길·상자 등 이벤트가 등장하면 채팅 다수결로 선택 → 정답/오답에 따라 파티 체력이 변합니다.</div></div>
+<div class="flow-step"><div class="flow-num">4</div><div><b>전투 층</b> - 몬스터가 등장하면 직업별 명령어로 자동 공격합니다. 보스는 주기적으로 패턴을 예고하며, 제한시간 안에 파훼 게이지를 채워야 합니다.</div></div>
+<div class="flow-step"><div class="flow-num">5</div><div><b>결과</b> - 던전 정복 또는 파티 전멸 결과 화면이 표시된 뒤, 자동으로 로비로 돌아가 다음 라운드 모집을 시작합니다.</div></div>
+
+<h3>종료 조건</h3>
+<ul>
+  <li><b>승리</b>: 마지막 층(최종 보스)까지 클리어하면 "던전 정복" 결과 화면이 표시됩니다.</li>
+  <li><b>패배</b>: 파티 전체 체력이 0이 되면 "파티 전멸" 결과 화면이 표시되고, 자동으로 로비로 리셋되어 다시 도전할 수 있습니다.</li>
+</ul>
+
+<h2>실행 방법 (심사용 플레이 안내)</h2>
+<p>
+  심사자는 별도 설치 없이 아래 링크에 접속하면 바로 플레이할 수 있는 <b>1인용 솔로 데모</b>를 준비했습니다.
+  실제 게임은 유튜브 라이브 방송과 다수의 시청자가 있어야 진행되는 구조이기 때문에, 심사자가 혼자서도
+  게임의 핵심 진행(로비 → 던전 입장 → 탐험 갈림길 → 전투 → 패턴 보스전 → 클리어)을 처음부터 끝까지
+  체험할 수 있도록 다른 시청자들이 자동으로 채팅에 참여하는 데모 버전을 별도로 만들었습니다.
+  화면 오른쪽에는 실제 유튜브 라이브 채팅을 재현한 로그가 함께 표시되어, 실제 방송에서 어떤 식으로
+  진행되는지도 함께 확인하실 수 있습니다.
+</p>
+<ol>
+  <li>아래 플레이 링크 접속 (PC/모바일 브라우저 모두 지원, 설치 불필요)</li>
+  <li>로비 화면에서 다른 시청자(봇)들이 자동으로 참가하는 동안, "✋ 참가하기" 버튼을 클릭</li>
+  <li>1층 몬스터 "플러그" 전투 - 화면 하단 스킬 버튼으로 공격</li>
+  <li>2층 갈림길에서 <code>⬅️ 왼쪽</code> / <code>➡️ 오른쪽</code> 중 선택</li>
+  <li>3층 미니보스 "스크라벤" 전투 - 평소엔 공격 버튼, 패턴 예고가 뜨면 제한시간 안에 방어 버튼 클릭</li>
+  <li>던전 클리어 후 "🔁 다시 플레이"로 반복 체험 가능</li>
+</ol>
+<p class="note">
+  참고: 실제 라이브 서비스는 스트리머가 별도의 백엔드 서버(Flask + Socket.IO)를 구동하고, OBS
+  브라우저 소스로 게임 화면을 방송에 송출하며, 유튜브 라이브 채팅 API로 시청자 명령어를 실시간으로
+  수집·처리하는 구조로 동작합니다. 이 백엔드를 포함한 전체 소스 코드는 GitHub 저장소에 공개되어 있습니다.
+</p>
+
+<h2>플레이 링크</h2>
+<div class="link-box">
+  <div class="label">🎮 심사용 솔로 데모 (브라우저에서 바로 플레이)</div>
+  <a href="https://tnals123.github.io/Youtube_Live_Dungeon_Game/demo.html">https://tnals123.github.io/Youtube_Live_Dungeon_Game/demo.html</a>
+</div>
+<div class="link-box">
+  <div class="label">💻 전체 소스 코드 (GitHub)</div>
+  <a href="https://github.com/tnals123/Youtube_Live_Dungeon_Game">https://github.com/tnals123/Youtube_Live_Dungeon_Game</a>
+</div>
+
+<h2>플레이 영상</h2>
+<div class="link-box">
+  <div class="label">▶️ 플레이 영상 (YouTube)</div>
+  <span class="placeholder">[영상 업로드 후 링크를 여기에 추가해주세요]</span>
+</div>
+
+<footer>던전 레이드 (Dungeon Raid) — 게임 소개 및 설명 문서</footer>
+
+</body>
+</html>

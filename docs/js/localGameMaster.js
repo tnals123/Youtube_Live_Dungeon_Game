@@ -590,6 +590,13 @@ class LocalGameMaster {
     }
 
     _resolveExplore(choice) {
+        // 봇 투표는 무작위라 당신이 고른 쪽이 실제 최다 득표가 아닐 수 있다 - 결과 배너에서
+        // "당신의 선택"이 항상 다수결로 이긴 것처럼 보이도록, 집계를 당신 쪽으로 최소한만 보정한다
+        const other = choice === '/왼쪽' ? '/오른쪽' : '/왼쪽';
+        if ((this._exploreTally[choice] || 0) <= (this._exploreTally[other] || 0)) {
+            this._exploreTally[choice] = (this._exploreTally[other] || 0) + 1;
+        }
+
         const correct = choice === '/왼쪽';
         const outcome = correct
             ? { text: '안전한 길이다. 파티가 조용히 전진한다.', damage_pct: 0, sfx: '5.wav' }
@@ -1084,8 +1091,7 @@ class LocalGameMaster {
                     floor: 1,
                     next_floor: 2,
                     ranking: this._buildRanking(),
-                    fade_bgm_on_clear: true,
-                    fade_bgm_duration_sec: 2
+                    fade_bgm_on_clear: false  // 실제 던전 에디터 설정(1층)과 동일 - 곡 안 끊김
                 });
                 this._t(() => this._runExplore(), 4000);
 
@@ -1096,8 +1102,7 @@ class LocalGameMaster {
                     dungeon_name: '어둠의 지하묘지 (데모)',
                     end_message: '데모 플레이를 완료했습니다! 실제 라이브 버전은 유튜브 채팅으로\n수십~수백 명이 함께 진행합니다.',
                     ranking: this._buildRanking(),
-                    fade_bgm_on_clear: true,
-                    fade_bgm_duration_sec: 2
+                    fade_bgm_on_clear: false  // 실제 던전 에디터에 3층 설정값이 없어 기본값(끊김 없음) 사용
                 });
                 this._t(() => {
                     if (window.DemoUI) window.DemoUI.showRestart();
