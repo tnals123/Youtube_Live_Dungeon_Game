@@ -1,0 +1,648 @@
+{
+  "id": "dark_catacomb",
+  "name": "어둠의 지하묘지",
+  "floors": [
+    {
+      "floor": 1,
+      "type": "battle",
+      "battle": {
+        "type": "normal",
+        "name": "플러그",
+        "emoji": "🐀",
+        "hp": 200000,
+        "attack_interval_sec": 4,
+        "attack_damage_pct": 4,
+        "attack_text": "플러그가 전기를 내뿜습니다!",
+        "patterns": [],
+        "banner_text": "1층 : 플러그의 방",
+        "battle_bgm": "theme/012 Thunderwave Cave (PMD Blue Rescue Team OST).mp3",
+        "battle_bgm_volume": 0.45,
+        "auto_calc_attack": true,
+        "target_kill_unit": "min",
+        "target_kill_sec": 120,
+        "no_heal_wipe_unit": "min",
+        "no_heal_wipe_sec": 60
+      },
+      "fade_bgm_on_clear": false,
+      "explore": {
+        "type": "fork",
+        "prompt": "",
+        "options": [
+          "/왼쪽",
+          "/오른쪽"
+        ],
+        "answer": "/왼쪽",
+        "window_sec": 25,
+        "on_correct": {
+          "text": "",
+          "damage_pct": 0
+        },
+        "on_wrong": {
+          "text": "",
+          "damage_pct": 0
+        },
+        "ambient_sound": "던전소리1.wav",
+        "ambient_sound_volume": 0.84
+      }
+    },
+    {
+      "floor": 2,
+      "type": "explore",
+      "explore": {
+        "type": "fork",
+        "prompt": "갈림길이 나타났다.\n왼쪽에서 바람소리가, 오른쪽에서 물소리가 들린다.",
+        "options": [
+          "/왼쪽",
+          "/오른쪽"
+        ],
+        "answer": "/왼쪽",
+        "window_sec": 25,
+        "on_correct": {
+          "text": "안전한 길이다. 파티가 조용히 전진한다.",
+          "damage_pct": 0,
+          "sfx": "5.wav"
+        },
+        "on_wrong": {
+          "text": "바닥이 무너진다! 함정이다!",
+          "damage_pct": 10,
+          "sfx": "바닥무너짐1.wav"
+        },
+        "banner_text": "2층 탐험",
+        "ambient_sound": "던전소리1.wav",
+        "ambient_sound_volume": 0.76,
+        "options_en": [
+          "",
+          ""
+        ]
+      },
+      "fade_bgm_on_clear": true,
+      "fade_bgm_duration_sec": 5,
+      "battle": {
+        "patterns": []
+      }
+    },
+    {
+      "floor": 3,
+      "type": "battle",
+      "battle": {
+        "type": "miniboss",
+        "name": "스크라벤",
+        "emoji": "👾",
+        "hp": 700000,
+        "attack_interval_sec": 4,
+        "attack_damage": 1000,
+        "attack_text": "스크라벤이 먹잇감을 향해 발톱을 휘두릅니다.",
+        "patterns": [
+          {
+            "id": "pattern1",
+            "telegraph": "스크라벤이 모든 것을 찢어발길 준비를 합니다.",
+            "window_sec": 25,
+            "success_threshold": 70,
+            "scores": {
+              "/방어": 0.5,
+              "/퇴격": 0.3,
+              "/역산": -0.3,
+              "/정화": -0.2
+            },
+            "on_success": {
+              "text": ""
+            },
+            "on_fail": {
+              "text": "",
+              "power_damage_pct": 30
+            },
+            "telegraph_anim": "idle",
+            "resolve_anim": "attack3",
+            "success_anim": "hit",
+            "show_hint": true,
+            "telegraph_loop_sound": "스크라벤대기모션1.wav",
+            "telegraph_sfx": "텔레그래프사운드1.wav",
+            "telegraph_sfx_volume": 1.28,
+            "telegraph_loop_sound_volume": 1.28
+          }
+        ],
+        "banner_text": "3층 : 스크라벤의 방",
+        "battle_bgm": "theme/068 - Dialgas Fight to the Finish! - (Pokémon Mystery Dungeon - Explorers of Sky).mp3",
+        "battle_bgm_volume": 0.43,
+        "target_kill_unit": "min",
+        "target_kill_sec": 300,
+        "auto_calc_attack": true,
+        "no_heal_wipe_unit": "sec",
+        "no_heal_wipe_sec": 30
+      },
+      "end_here": true
+    },
+    {
+      "floor": 4,
+      "type": "explore",
+      "explore": {
+        "type": "chest",
+        "prompt": "낡은 상자가 놓여 있다.\n희미하게 빛이 새어나온다.",
+        "options": [
+          "/연다",
+          "/안연다"
+        ],
+        "answer": "/연다",
+        "window_sec": 20,
+        "on_correct": {
+          "text": "축복의 부적! 다음 전투 공격력 +20%",
+          "damage_pct": 0,
+          "reward": "atk_buff_20"
+        },
+        "on_wrong": {
+          "text": "상자를 지나쳤다. 아무 일도 없었다.",
+          "damage_pct": 0
+        }
+      }
+    },
+    {
+      "floor": 5,
+      "type": "battle",
+      "battle": {
+        "type": "boss",
+        "name": "저주받은 사제",
+        "emoji": "🧟",
+        "hp": 2000000,
+        "pattern_interval_sec": 12,
+        "patterns": [
+          {
+            "id": "dark_prayer",
+            "telegraph": "사제가 낮게 중얼거리며\n어둠의 기도를 시작한다...",
+            "window_sec": 25,
+            "success_threshold": 70,
+            "scores": {
+              "/역산": 5,
+              "/강타": -1,
+              "/저격": -1,
+              "/파이어볼": -1,
+              "/공격": -1
+            },
+            "on_success": {
+              "text": "마법사들이 주문을 역산했다! 기도가 무산된다!"
+            },
+            "on_fail": {
+              "text": "어둠의 기도가 완성됐다! 저주가 파티를 덮친다!",
+              "power_damage_pct": 30
+            }
+          },
+          {
+            "id": "curse_scream",
+            "telegraph": "사제의 목이 기괴하게 부풀어 오른다...!",
+            "window_sec": 22,
+            "success_threshold": 60,
+            "scores": {
+              "/정화": 5
+            },
+            "on_success": {
+              "text": "정화의 빛이 비명을 삼켰다!"
+            },
+            "on_fail": {
+              "text": "저주의 절규!! 파티의 정신이 무너진다!",
+              "power_damage_pct": 35
+            }
+          }
+        ]
+      }
+    },
+    {
+      "floor": 6,
+      "type": "explore",
+      "explore": {
+        "type": "chest",
+        "prompt": "화려한 황금 상자가 놓여 있다.\n...너무 수상할 정도로 화려하다.",
+        "options": [
+          "/연다",
+          "/안연다"
+        ],
+        "answer": "/안연다",
+        "window_sec": 20,
+        "on_correct": {
+          "text": "상자가 이빨을 드러낸다... 미믹이었다! 무시하고 지나간다.",
+          "damage_pct": 0
+        },
+        "on_wrong": {
+          "text": "미믹이다!! 파티가 물어뜯겼다!",
+          "damage_pct": 15
+        }
+      }
+    },
+    {
+      "floor": 7,
+      "type": "battle",
+      "battle": {
+        "type": "boss",
+        "name": "무덤의 군주",
+        "emoji": "👹",
+        "hp": 3500000,
+        "pattern_interval_sec": 12,
+        "patterns": [
+          {
+            "id": "grave_slam",
+            "telegraph": "군주가 거대한 철퇴를\n하늘 높이 치켜든다...!",
+            "window_sec": 22,
+            "success_threshold": 70,
+            "scores": {
+              "/방어": 5
+            },
+            "on_success": {
+              "text": "방패벽이 철퇴를 받아냈다!"
+            },
+            "on_fail": {
+              "text": "대지가 갈라진다!! 파티가 짓눌렸다!",
+              "power_damage_pct": 35
+            }
+          },
+          {
+            "id": "soul_drain",
+            "telegraph": "군주 주위로 핏빛 안개가 피어오른다...",
+            "window_sec": 22,
+            "success_threshold": 60,
+            "scores": {
+              "/정화": 5,
+              "/역산": 3,
+              "/강타": -3,
+              "/저격": -3,
+              "/파이어볼": -3,
+              "/퇴격": -3,
+              "/공격": -3
+            },
+            "on_success": {
+              "text": "안개가 정화됐다! 흡혈이 실패한다!"
+            },
+            "on_fail": {
+              "text": "안개가 파티의 힘을 빨아들인다!!",
+              "power_damage_pct": 30
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "sounds": {
+    "lobby_bgm": "theme/004 Personality Test (PMD Blue Rescue Team OST).mp3",
+    "lobby_bgm_volume": 0.68,
+    "entry_bgm": "theme/011 Insert Title (PMD Blue Rescue Team OST).mp3",
+    "entry_bgm_volume": 0.4,
+    "warrior_attack_sfx": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      "전사공격3.wav"
+    ],
+    "warrior_attack_sfx_uncommon": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_rare": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_epic": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_legendary": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_volume": [
+      0.98,
+      0.98,
+      0.98
+    ],
+    "floor_clear_sfx": "2.wav",
+    "archer_attack_sfx": [
+      "궁수공격1.wav",
+      "궁수공격2.wav",
+      "궁수공격3.wav"
+    ],
+    "archer_attack_sfx_volume": [
+      1.39,
+      1.39,
+      1.3
+    ],
+    "mage_attack_sfx": [
+      "법사공격1.wav",
+      "법사공격2.wav"
+    ],
+    "mage_attack_sfx_volume": [
+      0.49,
+      0.57
+    ],
+    "join_sfx_rare": "희귀참가.wav",
+    "join_sfx_uncommon": "일반참가.wav",
+    "join_sfx_common": "일반참가.wav",
+    "join_sfx_epic": "에픽참가.wav",
+    "join_sfx_legendary": "전설출현.wav"
+  },
+  "min_players": 5,
+  "skill_vfx": {
+    "힐": {
+      "self": {
+        "common": {
+          "file": "힐러/vfx/Heal Effect Sprite Sheet.png",
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "frameRate": 12,
+          "scale": 1.8,
+          "offsetX": -34,
+          "offsetY": -200,
+          "depth": "behind",
+          "sound": "힐러정화1.wav",
+          "sound_volume": 0.1
+        },
+        "uncommon": {}
+      },
+      "boss": {
+        "common": {}
+      }
+    },
+    "역산": {
+      "action": "magic_up",
+      "self": {
+        "sound": "역산1.wav"
+      }
+    },
+    "정화": {
+      "self": {
+        "common": {
+          "file": "힐러/vfx/Attack effect.png",
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "frameRate": 12,
+          "scale": 1.8,
+          "offsetX": -34,
+          "offsetY": -200,
+          "sound": "힐러정화1.wav",
+          "sound_volume": 0.1
+        }
+      },
+      "boss": {
+        "common": {
+          "file": "힐러/vfx/힐러정화.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 337,
+          "scale": 1.8,
+          "randomOffsetX": 20,
+          "randomOffsetY": 20
+        }
+      }
+    },
+    "퇴격": {
+      "self": {
+        "common": {
+          "sound": "퇴각1.wav"
+        }
+      },
+      "action": "roll"
+    },
+    "강타": {
+      "self": {
+        "common": {
+          "frameSize": 148,
+          "cols": 6,
+          "rows": 1,
+          "frameRate": 15,
+          "frameHeight": 32,
+          "scale": 2
+        },
+        "uncommon": {},
+        "legendary": {
+          "plist": false,
+          "frameRate": 12,
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "offsetY": 357
+        },
+        "rare": {},
+        "epic": {}
+      },
+      "boss": {
+        "common": {
+          "file": "전사/vfx/전사공격2.png",
+          "frameSize": 148,
+          "cols": 6,
+          "rows": 1,
+          "frameRate": 15,
+          "frameHeight": 32,
+          "scale": 2.5,
+          "randomOffsetX": 30,
+          "randomOffsetY": 30,
+          "offsetY": 350,
+          "plist": true
+        },
+        "uncommon": {
+          "file": "전사/vfx/전사고급공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "rare": {
+          "file": "전사/vfx/전사희귀공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "epic": {
+          "file": "전사/vfx/전사영웅공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "legendary": {
+          "file": "전사/vfx/전사전설공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 338,
+          "scale": 2.8,
+          "hitFrames": [
+            4,
+            6,
+            9,
+            11,
+            13,
+            14,
+            15,
+            23
+          ],
+          "hitStopEnabled": true,
+          "shakeIntensity": 0.004,
+          "sound": "전사전설공격2.wav",
+          "sound_volume": 1.41,
+          "hitStopMs": 80,
+          "hitStopFrames": [
+            4,
+            6,
+            9,
+            11,
+            13,
+            14,
+            15,
+            23
+          ]
+        }
+      }
+    },
+    "저격": {
+      "self": {
+        "common": {},
+        "uncommon": {}
+      },
+      "boss": {
+        "common": {
+          "file": "궁수/vfx/궁수공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "uncommon": {
+          "file": "궁수/vfx/궁수고급공격2.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "rare": {
+          "file": "궁수/vfx/궁수희귀공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "epic": {
+          "file": "궁수/vfx/궁수에픽공격1.png",
+          "plist": true,
+          "frameRate": 12,
+          "scale": 2.05,
+          "offsetY": 357,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50
+        },
+        "legendary": {
+          "file": "마법사/vfx/궁수전설1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 337,
+          "scale": 3,
+          "hitFrames": [
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "sound": "궁수전설공격1.wav",
+          "sound_volume": 1.58
+        }
+      }
+    },
+    "파이어볼": {
+      "self": {
+        "common": {},
+        "uncommon": {},
+        "rare": {},
+        "epic": {},
+        "legendary": {}
+      },
+      "boss": {
+        "common": {
+          "file": "마법사/vfx/법사파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 357,
+          "scale": 2.3,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50
+        },
+        "uncommon": {
+          "file": "마법사/vfx/법사파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 3
+        },
+        "rare": {
+          "file": "궁수/vfx/법사공격1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 357,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "scale": 2.4,
+          "randomOffsetY": 50
+        },
+        "epic": {
+          "file": "마법사/vfx/법사파이어볼2.png",
+          "plist": true,
+          "frameRate": 12,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 1.8
+        },
+        "legendary": {
+          "file": "전사/vfx/법사전설파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "sound": "법사전설사운드1.wav",
+          "sound_volume": 0.51,
+          "offsetY": 247,
+          "scale": 2.45,
+          "hitFrames": [
+            15
+          ],
+          "hitStopFrames": [
+            14
+          ]
+        }
+      },
+      "action": "fireball"
+    },
+    "방어": {
+      "self": {
+        "common": {}
+      }
+    }
+  },
+  "attack_periods": {
+    "legendary": 5
+  },
+  "language": "en",
+  "name_en": "Dark Dungeon"
+}

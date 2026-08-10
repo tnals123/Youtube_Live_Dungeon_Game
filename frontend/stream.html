@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Raid - YouTube Stream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'SeoulNamsan';
+            src: url('assets/fonts/SeoulNamsanB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'SeoulNamsanEB';
+            src: url('assets/fonts/SeoulNamsanEB.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+        }
+
+
+        /* 폰트 프리로드용 숨김 요소 */
+        .font-preload {
+            position: absolute;
+            left: -9999px;
+            visibility: hidden;
+        }
+
+        body {
+            background-color: #000000;
+            overflow: hidden;
+            font-family: 'DungGeunMo', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-container {
+            width: 1080px;
+            height: 1920px;
+        }
+
+        #game-container canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 폰트 프리로드 (숨김) -->
+    <div class="font-preload" style="font-family: 'DungGeunMo';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsan';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsanEB';">.</div>
+
+    <!-- Game Container Only -->
+    <div id="game-container"></div>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
+    <!-- Game Code -->
+    <script src="js/i18n.js"></script>
+    <script src="js/monsterAnim.js"></script>
+    <script src="js/bgmManager.js"></script>
+    <script src="js/vfxManager.js"></script>
+    <script src="js/formation.js"></script>
+    <script src="js/joinCard.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/scenes/LobbyScene.js"></script>
+    <script src="js/scenes/DungeonEntryScene.js"></script>
+    <script src="js/scenes/ExploreScene.js"></script>
+    <script src="js/scenes/BattleScene.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+{
+  "clips": {
+    "attack1": {
+      "frames": [
+        "f4_creepmangler_attack_000.png",
+        "f4_creepmangler_attack_001.png",
+        "f4_creepmangler_attack_002.png",
+        "f4_creepmangler_attack_003.png",
+        "f4_creepmangler_attack_004.png",
+        "f4_creepmangler_attack_005.png",
+        "f4_creepmangler_attack_006.png",
+        "f4_creepmangler_attack_007.png",
+        "f4_creepmangler_attack_008.png",
+        "f4_creepmangler_attack_009.png"
+      ],
+      "frameRate": 12,
+      "repeat": 0,
+      "pattern": ""
+    },
+    "attack2": {
+      "frames": [
+        "f4_creepmangler_attack_010.png",
+        "f4_creepmangler_attack_011.png",
+        "f4_creepmangler_attack_012.png",
+        "f4_creepmangler_attack_013.png",
+        "f4_creepmangler_attack_014.png",
+        "f4_creepmangler_attack_015.png",
+        "f4_creepmangler_attack_016.png",
+        "f4_creepmangler_attack_017.png",
+        "f4_creepmangler_attack_018.png"
+      ],
+      "frameRate": 12,
+      "repeat": 0,
+      "pattern": ""
+    },
+    "attack3": {
+      "frames": [
+        "f4_creepmangler_attack_000.png",
+        "f4_creepmangler_attack_001.png",
+        "f4_creepmangler_attack_002.png",
+        "f4_creepmangler_attack_003.png",
+        "f4_creepmangler_attack_004.png",
+        "f4_creepmangler_attack_005.png",
+        "f4_creepmangler_attack_006.png",
+        "f4_creepmangler_attack_007.png",
+        "f4_creepmangler_attack_008.png",
+        "f4_creepmangler_attack_009.png",
+        "f4_creepmangler_attack_010.png",
+        "f4_creepmangler_attack_011.png",
+        "f4_creepmangler_attack_012.png",
+        "f4_creepmangler_attack_013.png",
+        "f4_creepmangler_attack_014.png",
+        "f4_creepmangler_attack_015.png",
+        "f4_creepmangler_attack_016.png",
+        "f4_creepmangler_attack_017.png",
+        "f4_creepmangler_attack_018.png",
+        "f4_creepmangler_attack_019.png",
+        "f4_creepmangler_attack_020.png",
+        "f4_creepmangler_attack_021.png",
+        "f4_creepmangler_attack_022.png",
+        "f4_creepmangler_attack_023.png",
+        "f4_creepmangler_attack_024.png",
+        "f4_creepmangler_attack_025.png",
+        "f4_creepmangler_attack_026.png",
+        "f4_creepmangler_attack_027.png",
+        "f4_creepmangler_attack_028.png",
+        "f4_creepmangler_attack_029.png",
+        "f4_creepmangler_attack_030.png",
+        "f4_creepmangler_attack_031.png"
+      ],
+      "frameRate": 15,
+      "repeat": 0,
+      "pattern": ""
+    }
+  },
+  "meta": {
+    "attack_hit_frame": 4,
+    "scale": 2.35,
+    "y_offset": -225,
+    "shadow_scale": 1.45,
+    "shadow_y": 350,
+    "idle_anim": "breathing",
+    "attack_anim": "attack1",
+    "attack_anims": [
+      "attack1",
+      "attack2"
+    ],
+    "anim_hits": {
+      "attack3": [
+        4,
+        11,
+        22
+      ],
+      "attack1": [
+        4
+      ],
+      "attack2": [
+        1
+      ]
+    },
+    "attack_sound": "스크라벤공격1.wav",
+    "attack_sound_by_motion": {
+      "attack2": "스크라벤공격1.wav"
+    },
+    "attack_sound_volume": 1.33,
+    "attack_hit_sound_volume": 1.09,
+    "attack_sound_by_motion_volume": {
+      "attack2": 1.27
+    },
+    "vfx_offset_enabled": true,
+    "vfx_offset_y": -180
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "clips": {},
+  "meta": {
+    "attack_hit_frame": 17,
+    "scale": 3,
+    "y_offset": -300,
+    "shadow_scale": 1.5,
+    "shadow_y": 400,
+    "anim_hits": {
+      "attack": [
+        17
+      ]
+    },
+    "attack_anims": [],
+    "attack_sound": "플러그공격.wav",
+    "attack_sound_volume": 1.33,
+    "hit_sound_volume": 0.12,
+    "attack_hit_sound": "hitSound1.wav",
+    "attack_hit_sound_volume": 2.89,
+    "sound_hits": {
+      "attack": [
+        15
+      ]
+    },
+    "death_sound": "플러그죽음1.wav"
+  }
+}

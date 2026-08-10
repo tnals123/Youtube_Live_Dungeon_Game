@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Raid - YouTube Live Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'SeoulNamsan';
+            src: url('assets/fonts/SeoulNamsanB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'SeoulNamsanEB';
+            src: url('assets/fonts/SeoulNamsanEB.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+        }
+
+
+        /* 폰트 프리로드용 숨김 요소 */
+        .font-preload {
+            position: absolute;
+            left: -9999px;
+            visibility: hidden;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            overflow: auto;
+            font-family: 'DungGeunMo', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Phone Frame Container */
+        #phone-frame {
+            position: relative;
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 2px rgba(255, 255, 255, 0.1);
+            border: 3px solid #333;
+            margin-left: 220px;
+            margin-right: 300px;
+        }
+
+        #phone-screen {
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            background: #1a1a2e;
+            /* Default size - will be set by JS */
+            width: 405px;
+            height: 720px;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #game-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Device Selector Panel */
+        #device-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            border: 1px solid #333;
+            width: 200px;
+        }
+
+        #device-panel h3 {
+            margin-bottom: 10px;
+            color: #00ff00;
+            font-size: 14px;
+        }
+
+        #device-panel .device-btn {
+            display: block;
+            width: 100%;
+            margin: 4px 0;
+            padding: 6px 10px;
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 10px;
+            text-align: left;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        #device-panel .device-btn:hover {
+            background: #333;
+            border-color: #00ff00;
+        }
+
+        #device-panel .device-btn.active {
+            background: #00ff00;
+            color: #000;
+            border-color: #00ff00;
+        }
+
+        #device-panel .section-title {
+            color: #888;
+            font-size: 9px;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        #current-size {
+            margin-top: 10px;
+            padding: 8px;
+            background: #111;
+            border-radius: 5px;
+            color: #00ff00;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        /* Debug Panel */
+        #debug-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+            width: 260px;
+            border: 1px solid #333;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        #debug-panel h3 {
+            margin-bottom: 10px;
+            color: #ffff00;
+        }
+
+        #debug-panel button {
+            display: block;
+            width: 100%;
+            margin: 4px 0;
+            padding: 8px;
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            cursor: pointer;
+            font-family: monospace;
+            border-radius: 5px;
+            font-size: 11px;
+        }
+
+        #debug-panel button:hover {
+            background: #555;
+        }
+
+        #debug-panel input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            font-family: monospace;
+            border-radius: 5px;
+        }
+
+        #debug-log {
+            max-height: 100px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 5px;
+            background: #111;
+            font-size: 9px;
+            border-radius: 5px;
+        }
+
+        /* Info bar */
+        #info-bar {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #888;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- 폰트 프리로드 (숨김) -->
+    <div class="font-preload" style="font-family: 'DungGeunMo';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsan';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsanEB';">.</div>
+
+    <!-- Device Size Selector -->
+    <div id="device-panel">
+        <h3>📱 Preview Size</h3>
+        <p style="font-size:9px; color:#666; margin-bottom:8px;">Game: 1080x1920 fixed<br>Preview only (scaled)</p>
+
+        <div class="section-title">iPhone</div>
+        <button class="device-btn" onclick="setDevice('iPhone SE', 375, 667)">iPhone SE</button>
+        <button class="device-btn" onclick="setDevice('iPhone 14', 390, 844)">iPhone 14</button>
+        <button class="device-btn" onclick="setDevice('iPhone 14 Pro Max', 430, 932)">iPhone 14 Pro Max</button>
+
+        <div class="section-title">Samsung</div>
+        <button class="device-btn" onclick="setDevice('Galaxy S23', 360, 780)">Galaxy S23</button>
+        <button class="device-btn" onclick="setDevice('Galaxy S24 Ultra', 412, 915)">Galaxy S24 Ultra</button>
+
+        <div class="section-title">YouTube Shorts</div>
+        <button class="device-btn active" onclick="setDevice('Shorts (Small)', 405, 720)">Shorts (Small)</button>
+        <button class="device-btn" onclick="setDevice('Shorts (HD)', 540, 960)">Shorts (HD)</button>
+        <button class="device-btn" onclick="setDevice('Shorts (Full)', 1080, 1920)">Shorts (Full 1:1)</button>
+
+        <div id="current-size">
+            Display: Shorts (Small)<br>
+            405 x 720 px<br>
+            Scale: 37.5%
+        </div>
+    </div>
+
+    <!-- Phone Frame -->
+    <div id="phone-frame">
+        <div id="phone-screen">
+            <div id="game-container"></div>
+        </div>
+    </div>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel">
+        <h3>🛠️ Debug</h3>
+
+        <label style="font-size:10px;">YouTube Video ID:</label>
+        <input type="text" id="video-id-input" placeholder="Live Video ID">
+        <button onclick="startYoutube()">Connect YouTube</button>
+        <button onclick="stopYoutube()">Disconnect</button>
+
+        <label style="font-size:10px; margin-top:6px; display:block;">Instagram 사용자명 (비공식 - 사전에 instagram_login.py 실행 필요):</label>
+        <input type="text" id="instagram-username-input" placeholder="예: your_username">
+        <button onclick="startInstagram()">Connect Instagram</button>
+        <button onclick="stopInstagram()">Disconnect</button>
+
+        <hr style="margin: 10px 0; border-color: #333;">
+
+        <button onclick="testJoin()">Test Join (1)</button>
+        <button onclick="testJoinMany(5)">Test Join (5)</button>
+        <button onclick="testJoinMany(20)">Test Join (20)</button>
+        <button onclick="resetGame()">Reset Game</button>
+
+        <div style="font-size:10px; color:#ffff00; margin:6px 0 4px;">🃏 등급별 참가 (등급별 카드 사운드 확인용)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+            <button onclick="testJoinGrade('common')">일반 참가</button>
+            <button onclick="testJoinGrade('uncommon')">고급 참가</button>
+            <button onclick="testJoinGrade('rare')">희귀 참가</button>
+            <button onclick="testJoinGrade('epic')">영웅 참가</button>
+            <button onclick="testJoinGrade('legendary')">전설 참가</button>
+        </div>
+
+        <button onclick="testDungeonEntry()">Dungeon Entry</button>
+        <button onclick="testDungeonRandom200()">🎲 Random 200 → Entry</button>
+        <button onclick="startBoss()">Start Boss</button>
+        <button onclick="skipPhase()">⏩ Skip Phase Timer</button>
+        <button onclick="killBoss()">💥 Kill Boss</button>
+        <button onclick="wipeParty()">💀 Wipe Party</button>
+
+        <button onclick="window.open('/tool.html', '_blank')">🎬 애니메이션 에디터</button>
+
+        <hr style="margin: 10px 0; border-color: #333;">
+        <div style="font-size:10px; color:#ffff00; margin-bottom:4px;">🧭 탐험 투표 (투표 중에만, 클릭당 1표)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+            <button onclick="testVote('왼쪽')">⬅️ /왼쪽</button>
+            <button onclick="testVote('오른쪽')">➡️ /오른쪽</button>
+            <button onclick="testVote('연다')">📦 /연다</button>
+            <button onclick="testVote('안연다')">🚫 /안연다</button>
+        </div>
+
+        <hr style="margin: 10px 0; border-color: #333;">
+        <div style="font-size:10px; color:#ffff00; margin-bottom:4px;">⚡ 스킬 테스트 (전투 중에만)</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+            <button onclick="testSkill('강타')">⚔️ /강타</button>
+            <button onclick="testSkill('방어')">⚔️ /방어</button>
+            <button onclick="testSkill('저격')">🏹 /저격</button>
+            <button onclick="testSkill('퇴격')">🏹 /퇴격</button>
+            <button onclick="testSkill('파이어볼')">🔮 /파이어볼</button>
+            <button onclick="testSkill('역산')">🔮 /역산</button>
+            <button onclick="testSkill('힐')">💚 /힐</button>
+            <button onclick="testSkill('정화')">💚 /정화</button>
+            <button onclick="testSkill('돌팔매')">🚶 /돌팔매</button>
+            <button onclick="testSkill('함성')">🚶 /함성</button>
+        </div>
+
+        <div id="debug-log"></div>
+    </div>
+
+    <!-- Info Bar -->
+    <div id="info-bar">
+        Game Resolution: 1080x1920 | Display: 405x720 (37.5%)
+    </div>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
+    <!-- Game Code -->
+    <script src="js/i18n.js"></script>
+    <script src="js/monsterAnim.js"></script>
+    <script src="js/bgmManager.js"></script>
+    <script src="js/vfxManager.js"></script>
+    <script src="js/formation.js"></script>
+    <script src="js/joinCard.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/scenes/LobbyScene.js"></script>
+    <script src="js/scenes/DungeonEntryScene.js"></script>
+    <script src="js/scenes/ExploreScene.js"></script>
+    <script src="js/scenes/BattleScene.js"></script>
+    <script src="js/game.js"></script>
+
+    <script>
+        // Game is always 1080x1920
+        // This only changes the DISPLAY size (preview)
+        const GAME_W = 1080;
+        const GAME_H = 1920;
+
+        let currentDevice = 'Shorts (Small)';
+
+        function setDevice(name, displayW, displayH) {
+            currentDevice = name;
+
+            // Only change the container size (display)
+            const phoneScreen = document.getElementById('phone-screen');
+            phoneScreen.style.width = displayW + 'px';
+            phoneScreen.style.height = displayH + 'px';
+
+            // Update button states
+            document.querySelectorAll('.device-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === name) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Calculate scale percentage
+            const scale = Math.min(displayW / GAME_W, displayH / GAME_H) * 100;
+
+            // Update info
+            document.getElementById('current-size').innerHTML =
+                `Display: ${name}<br>${displayW} x ${displayH} px<br>Scale: ${scale.toFixed(1)}%`;
+
+            document.getElementById('info-bar').textContent =
+                `Game Resolution: ${GAME_W}x${GAME_H} | Display: ${displayW}x${displayH} (${scale.toFixed(1)}%)`;
+
+            debugLog(`Preview: ${name} (${displayW}x${displayH})`);
+        }
+
+        // Initialize with default
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                setDevice('Shorts (Small)', 405, 720);
+            }, 100);
+        });
+
+        // Debug functions
+        function debugLog(msg) {
+            const log = document.getElementById('debug-log');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML = `[${time}] ${msg}<br>` + log.innerHTML;
+            if (log.children.length > 20) {
+                log.innerHTML = log.innerHTML.split('<br>').slice(0, 20).join('<br>');
+            }
+        }
+
+        function startYoutube() {
+            const videoId = document.getElementById('video-id-input').value;
+            if (videoId) {
+                window.gameSocket.startYoutube(videoId);
+                debugLog(`YouTube: ${videoId}`);
+            } else {
+                alert('Enter Video ID!');
+            }
+        }
+
+        function stopYoutube() {
+            window.gameSocket.stopYoutube();
+            debugLog('YouTube disconnected');
+        }
+
+        function startInstagram() {
+            const username = document.getElementById('instagram-username-input').value;
+            if (username) {
+                window.gameSocket.startInstagram(username);
+                debugLog(`Instagram: ${username}`);
+            } else {
+                alert('Enter Instagram username!');
+            }
+        }
+
+        function stopInstagram() {
+            window.gameSocket.stopInstagram();
+            debugLog('Instagram disconnected');
+        }
+
+        function testJoin() {
+            const names = ["Player", "Gamer", "Hero", "Knight", "Mage", "Archer", "Healer"];
+            const name = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 1000);
+            fetch(`/api/test/join/${encodeURIComponent(name)}`)
+                .then(r => r.text())
+                .then(d => debugLog(`Joined: ${name}`));
+        }
+
+        function testJoinMany(count) {
+            debugLog(`Joining ${count}...`);
+            fetch(`/api/test/join_many/${count}`)
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        function testJoinGrade(grade) {
+            fetch(`/api/test/join_grade/${grade}`)
+                .then(r => r.text())
+                .then(d => debugLog(`Joined (${grade}): ${d}`));
+        }
+
+        function resetGame() {
+            fetch('/api/reset')
+                .then(r => r.text())
+                .then(d => {
+                    debugLog('Game reset');
+                    location.reload();
+                });
+        }
+
+        function startBoss() {
+            fetch('/api/start_boss')
+                .then(r => r.text())
+                .then(d => debugLog('Boss started'));
+        }
+
+        function skipPhase() {
+            fetch('/api/skip')
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        function killBoss() {
+            fetch('/api/test/kill_boss')
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        function wipeParty() {
+            fetch('/api/test/wipe')
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        // ===== 탐험 투표 테스트 =====
+        function testVote(opt) {
+            fetch('/api/test/vote/1/' + encodeURIComponent(opt))
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        // ===== 스킬 테스트 =====
+        function testSkill(cmd) {
+            fetch('/api/test/skill/' + encodeURIComponent(cmd))
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        function testDungeonEntry() {
+            // 실제 참가자 데이터로 던전 입장 (서버가 phase_change로 씬 전환)
+            fetch('/api/start_dungeon')
+                .then(r => r.text())
+                .then(d => debugLog(d));
+        }
+
+        function testDungeonRandom200() {
+            // 200명을 랜덤하게 4개 직업에 분배
+            const total = 200;
+            let remaining = total;
+
+            // 랜덤하게 분배 (마지막 직업은 나머지 전부)
+            const warrior = Math.floor(Math.random() * (remaining * 0.5)) + Math.floor(remaining * 0.1);
+            remaining -= warrior;
+            const archer = Math.floor(Math.random() * (remaining * 0.6)) + Math.floor(remaining * 0.1);
+            remaining -= archer;
+            const mage = Math.floor(Math.random() * (remaining * 0.7)) + Math.floor(remaining * 0.1);
+            remaining -= mage;
+            const healer = remaining;
+
+            const testData = {
+                partyStats: {
+                    total: total,
+                    warrior: warrior,
+                    archer: archer,
+                    mage: mage,
+                    healer: healer
+                },
+                totalPower: total * Math.floor(Math.random() * 50 + 50),  // 랜덤 전투력
+                mvpCandidates: [
+                    { name: '랜덤일반', job: '전사', grade: '일반' },
+                    { name: '랜덤전설', job: '마법사', grade: '전설' },
+                    { name: '랜덤희귀', job: '궁수', grade: '희귀' },
+                    { name: '랜덤영웅', job: '힐러', grade: '영웅' },
+                    { name: '랜덤전설2', job: '전사', grade: '전설' },
+                    { name: '랜덤희귀2', job: '마법사', grade: '희귀' },
+                    { name: '랜덤영웅2', job: '궁수', grade: '영웅' },
+                    { name: '랜덤일반2', job: '힐러', grade: '일반' }
+                ]
+            };
+
+            debugLog(`Random: 전사${warrior} 궁수${archer} 마법${mage} 힐러${healer}`);
+            window.game.scene.start('DungeonEntryScene', testData);
+            debugLog('Dungeon Entry (Random 200) started');
+        }
+    </script>
+</body>
+</html>
