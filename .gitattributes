@@ -1,0 +1,15 @@
+# 모든 텍스트 파일은 저장소에는 LF로 통일 저장
+# (Windows에서 열어도 체크아웃 시 각 OS 방식에 맞게 자동 변환됨)
+* text=auto eol=lf
+
+# 바이너리로 취급해서 줄바꿈 변환 대상에서 제외
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.ttf binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.ico binary
