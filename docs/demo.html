@@ -186,7 +186,7 @@
             const check = setInterval(() => {
                 if (window.game && window.gameSocket) {
                     clearInterval(check);
-                    setTimeout(() => window.gameSocket.start(), 500);
+                    setTimeout(() => window.gameSocket.start(), 900);
                 }
             }, 100);
         })();

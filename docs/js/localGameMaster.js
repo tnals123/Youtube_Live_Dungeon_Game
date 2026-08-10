@@ -81,6 +81,7 @@ class LocalGameMaster {
 
     _resetState() {
         this.you = null;
+        this._youJoined = false;
         this.bots = [];
         this.partyHp = 0;
         this.partyMaxHp = 0;
@@ -157,159 +158,217 @@ class LocalGameMaster {
     }
 
     // ============ 이벤트 발사 헬퍼 (socket.js의 각 on() 핸들러와 1:1 대응) ============
-    _fireGameState(data) { window.gameState = data; }
+    // 씬이 하필 전환되는 타이밍에 걸려 메서드가 없거나 내부 상태가 아직 안 갖춰졌을 때
+    // 여기서 던진 예외가 각본 전체(async 함수 체인)를 조용히 멈춰버리는 걸 막기 위해
+    // 이벤트 발사는 전부 이 래퍼를 통과시킨다 - 실패해도 콘솔에 로그만 남기고 계속 진행
+    _safe(label, fn) {
+        try {
+            fn();
+        } catch (e) {
+            console.error(`[LocalGameMaster] ${label} 처리 중 오류 (무시하고 계속 진행):`, e);
+        }
+    }
+
+    _fireGameState(data) { this._safe('game_state', () => { window.gameState = data; }); }
 
     _firePlayerJoined(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.addPlayer) scene.addPlayer(data);
+        this._safe('player_joined', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.addPlayer) scene.addPlayer(data);
+        });
     }
 
     _firePartyStats(stats) {
-        window.partyStats = stats;
-        if (window.game) {
-            const scene = window.game.scene.getScene('LobbyScene');
-            if (scene && scene.updatePartyStats) scene.updatePartyStats(stats);
-        }
+        this._safe('party_stats', () => {
+            window.partyStats = stats;
+            if (window.game) {
+                const scene = window.game.scene.getScene('LobbyScene');
+                if (scene && scene.updatePartyStats) scene.updatePartyStats(stats);
+            }
+        });
     }
 
     _fireFormationUpdate(roster) {
-        window.formationRoster = roster;
-        const scene = this.getActiveScene();
-        if (scene && scene.updateFormation) scene.updateFormation(roster);
+        this._safe('formation_update', () => {
+            window.formationRoster = roster;
+            const scene = this.getActiveScene();
+            if (scene && scene.updateFormation) scene.updateFormation(roster);
+        });
     }
 
     _fireTimerUpdate(timer, phase) {
-        const scene = this.getActiveScene();
-        if (scene && scene.updateTimer) scene.updateTimer(timer, phase);
+        this._safe('timer_update', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.updateTimer) scene.updateTimer(timer, phase);
+        });
     }
 
     _fireExploreEvent(data) {
-        const scene = this.getScene('ExploreScene');
-        if (scene && scene.showEvent) {
-            scene.showEvent(data);
-        } else {
-            this.pendingExploreEvent = data;
-        }
+        this._safe('explore_event', () => {
+            const scene = this.getScene('ExploreScene');
+            if (scene && scene.showEvent) {
+                scene.showEvent(data);
+            } else {
+                this.pendingExploreEvent = data;
+            }
+        });
     }
 
     _fireVoteUpdate(data) {
-        const scene = this.getScene('ExploreScene');
-        if (scene && scene.updateVotes) scene.updateVotes(data);
+        this._safe('vote_update', () => {
+            const scene = this.getScene('ExploreScene');
+            if (scene && scene.updateVotes) scene.updateVotes(data);
+        });
     }
 
     _fireExploreResult(data) {
-        const scene = this.getScene('ExploreScene');
-        if (scene && scene.showResult) scene.showResult(data);
+        this._safe('explore_result', () => {
+            const scene = this.getScene('ExploreScene');
+            if (scene && scene.showResult) scene.showResult(data);
+        });
     }
 
     _firePhaseChange(data) {
-        window.BgmManager.stopLooping();
-        window.AmbientManager.stop();
-        if (data.phase !== 'explore') this.pendingExploreEvent = null;
-        if (!window.game) return;
+        this._safe('phase_change:' + data.phase, () => {
+            window.BgmManager.stopLooping();
+            window.AmbientManager.stop();
+            if (data.phase !== 'explore') this.pendingExploreEvent = null;
+            if (!window.game) return;
 
-        if (data.phase === 'dungeon') {
-            this.switchScene('DungeonEntryScene', {
-                floor: data.floor,
-                partyStats: data.party_stats,
-                totalPower: data.total_power,
-                mvpCandidates: data.mvp_candidates,
-                monsters: data.monsters
-            });
-        } else if (data.phase === 'explore') {
-            this.startWithEntryTransition('ExploreScene', data);
-        } else if (data.phase === 'boss') {
-            this.startWithEntryTransition('BattleScene', data);
-        } else if (data.phase === 'lobby') {
-            this.switchScene('LobbyScene');
-        }
+            if (data.phase === 'dungeon') {
+                this.switchScene('DungeonEntryScene', {
+                    floor: data.floor,
+                    partyStats: data.party_stats,
+                    totalPower: data.total_power,
+                    mvpCandidates: data.mvp_candidates,
+                    monsters: data.monsters
+                });
+            } else if (data.phase === 'explore') {
+                this.startWithEntryTransition('ExploreScene', data);
+            } else if (data.phase === 'boss') {
+                this.startWithEntryTransition('BattleScene', data);
+            } else if (data.phase === 'lobby') {
+                this.switchScene('LobbyScene');
+            }
+        });
     }
 
     _fireAttackBatch(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.showAttackBatch) scene.showAttackBatch(data);
+        this._safe('attack_batch', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showAttackBatch) scene.showAttackBatch(data);
+        });
     }
 
     _fireMonsterAttack(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.showMonsterAttack) scene.showMonsterAttack(data);
+        this._safe('monster_attack', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showMonsterAttack) scene.showMonsterAttack(data);
+        });
     }
 
     _fireBossDefeated(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.showVictory) scene.showVictory(data);
+        this._safe('boss_defeated', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showVictory) scene.showVictory(data);
+        });
     }
 
     _fireDungeonClear(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.showConquered) scene.showConquered(data);
+        this._safe('dungeon_clear', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showConquered) scene.showConquered(data);
+        });
     }
 
     _firePartyWiped(data) {
-        const scene = this.getActiveScene();
-        if (scene && scene.showDefeat) scene.showDefeat(data);
+        this._safe('party_wiped', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.showDefeat) scene.showDefeat(data);
+        });
     }
 
     // ============ 데모 각본 시작/재시작 ============
     start() {
         this._resetState();
-        this._runLobby();
+        this._runLobby().catch(e => console.error('[LocalGameMaster] 데모 진행 중 오류:', e));
     }
 
     restart() {
         this._clearTimers();
         if (window.DemoUI) window.DemoUI.hideAll();
         this._resetState();
-        this._runLobby();
+        this._runLobby().catch(e => console.error('[LocalGameMaster] 데모 진행 중 오류:', e));
     }
 
     // ============ 1. 로비 ============
     async _runLobby() {
-        this._firePhaseChange({ phase: 'lobby' });
-        this._fireTimerUpdate(6, 'lobby');
+        // LobbyScene은 Phaser 부팅 시 이미 첫 씬으로 자동 실행돼 있으므로, 여기서 또
+        // start()를 불러 불필요하게 재시작시키면 카드 렌더링이 씹히는 타이밍 문제가
+        // 생길 수 있다 - 이미 떠 있으면 건드리지 않는다
+        if (!this.getScene('LobbyScene')) {
+            this._firePhaseChange({ phase: 'lobby' });
+            await this._sleep(400);  // 재시작된 경우 create() 끝날 시간 확보
+        }
+        this._fireTimerUpdate(8, 'lobby');
 
-        // "당신" 먼저 참가 (등급은 데모가 재밌게 느껴지도록 희귀 이상만 나오게 살짝 편향)
+        // 등급은 데모가 재밌게 느껴지도록 희귀 이상만 나오게 살짝 편향
         this.you = lgmMakeUnit('당신', 'demo_you', null, lgmWeightedPick({
             legendary: LGM_GRADES.legendary, epic: LGM_GRADES.epic, rare: LGM_GRADES.rare
         }));
 
-        const joinOrder = [this.you];
         const botCount = 6;
         const shuffledNames = [...LGM_BOT_NAMES].sort(() => Math.random() - 0.5).slice(0, botCount);
-        shuffledNames.forEach((name, i) => {
-            joinOrder.push(lgmMakeUnit(name, 'demo_bot_' + i));
-        });
-        this.bots = joinOrder.slice(1);
+        this.bots = shuffledNames.map((name, i) => lgmMakeUnit(name, 'demo_bot_' + i));
 
-        for (let i = 0; i < joinOrder.length; i++) {
-            const unit = joinOrder[i];
-            this._firePlayerJoined(unit);
+        // 다른 시청자(봇)들은 곧바로 채팅으로 참가하기 시작 - 화면이 살아있다는 걸 바로 보여줌
+        const joinYou = () => {
+            if (this._youJoined) return;
+            this._youJoined = true;
+            this._firePlayerJoined(this.you);
             this._firePartyStats(this._computePartyStats());
-            await this._sleep(i === 0 ? 250 : 550);
+            if (window.DemoUI) window.DemoUI.hideJoinButton();
+        };
+
+        if (window.DemoUI) window.DemoUI.showJoinButton(joinYou);
+
+        for (let i = 0; i < this.bots.length; i++) {
+            this._firePlayerJoined(this.bots[i]);
+            this._firePartyStats(this._computePartyStats());
+            await this._sleep(550);
         }
 
-        for (let t = 4; t >= 0; t--) {
+        for (let t = 7; t >= 0; t--) {
             this._fireTimerUpdate(t, 'lobby');
             await this._sleep(700);
         }
 
+        joinYou();  // 그때까지 안 눌렀으면 자동으로 참가 처리하고 계속 진행
+        await this._sleep(400);
+
         this._runDungeonEntry();
     }
 
+    // 참가 버튼을 아직 안 눌렀으면 "당신"은 통계/진형/랭킹에서 제외 (화면엔 안 보이는데
+    // 인원수만 먼저 세어지는 불일치를 막기 위함)
+    _allUnits() {
+        return [this._youJoined ? this.you : null, ...this.bots].filter(Boolean);
+    }
+
     _computePartyStats() {
-        const all = [this.you, ...this.bots].filter(Boolean);
+        const all = this._allUnits();
         const stats = { total: all.length, warrior: 0, archer: 0, mage: 0, healer: 0 };
         all.forEach(u => { stats[u.role] = (stats[u.role] || 0) + 1; });
         return stats;
     }
 
     _computeTotalPower() {
-        const all = [this.you, ...this.bots].filter(Boolean);
+        const all = this._allUnits();
         return all.reduce((sum, u) => sum + u.multiplier * 100, 0);
     }
 
     _computeMvpCandidates() {
-        const all = [this.you, ...this.bots].filter(Boolean);
+        const all = this._allUnits();
         return [...all]
             .sort((a, b) => b.multiplier - a.multiplier)
             .slice(0, 3)
@@ -342,7 +401,7 @@ class LocalGameMaster {
             mage: { units: [], overflow: 0 },
             healer: { units: [], overflow: 0 }
         };
-        [this.you, ...this.bots].filter(Boolean).forEach(u => {
+        this._allUnits().forEach(u => {
             roster[u.role].units.push({ user_id: u.user_id, name: u.name, grade: u.grade, alive: u.alive });
         });
         return roster;
@@ -604,7 +663,7 @@ class LocalGameMaster {
     }
 
     _buildRanking() {
-        const all = [this.you, ...this.bots].filter(Boolean);
+        const all = this._allUnits();
         return all
             .map(u => ({
                 name: u.name,

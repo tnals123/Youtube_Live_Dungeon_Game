@@ -23,6 +23,29 @@ window.DemoUI = {
         this.el.classList.add('visible');
     },
 
+    showJoinButton(onJoin) {
+        this._show(`
+            <div class="demo-hint">🎮 던전 원정대에 참가해보세요!</div>
+            <div class="demo-btn-row">
+                <button class="demo-btn demo-btn-join">✋ 참가하기</button>
+            </div>
+        `);
+        this.el.querySelector('.demo-btn-join').addEventListener('click', function onClick() {
+            this.disabled = true;
+            this.textContent = '✅ 참가 완료!';
+            onJoin();
+        });
+    },
+
+    hideJoinButton() {
+        if (this.el && this.el.querySelector('.demo-btn-join')) {
+            // 버튼을 바로 지우지 않고 "참가 완료!" 상태를 잠깐 보여준 다음 정리
+            setTimeout(() => {
+                if (this.el && this.el.querySelector('.demo-btn-join')) this.hideAll();
+            }, 700);
+        }
+    },
+
     showExploreChoice(options, onChoose) {
         this._show(`
             <div class="demo-hint">🧭 어느 쪽으로 갈까요? 직접 골라보세요</div>
