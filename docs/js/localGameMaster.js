@@ -634,6 +634,7 @@ class LocalGameMaster {
 
         this.bossMaxHp = 200000;
         this.bossHp = this.bossMaxHp;
+        this._battleSafetyMs = 90000;
 
         this._firePhaseChange({
             phase: 'boss',
@@ -670,8 +671,11 @@ class LocalGameMaster {
         this._monsterAttackText = '스크라벤이 먹잇감을 향해 발톱을 휘두릅니다.';
         this._monsterAttackChatText = '💢 스크라벤의 발톱 공격! 파티가 피해를 입었다';
 
-        this.bossMaxHp = 260000;
+        this.bossMaxHp = 1300000;  // 5x (기존 260000)
         this.bossHp = this.bossMaxHp;
+        // HP를 5배로 늘린 만큼, 안전장치(강제 종료) 시간도 같이 늘려서 실제 딜로 이길
+        // 여지를 준다 (안 늘리면 클릭을 아무리 해도 항상 안전장치로만 끝나버림)
+        this._battleSafetyMs = 240000;
 
         this._firePhaseChange({
             phase: 'boss',
@@ -725,14 +729,15 @@ class LocalGameMaster {
             this._timers.push(this._monsterTick);
         }
 
-        // 안전장치: 90초가 지나도 승부가 안 나면 강제로 몬스터를 쓰러뜨려서 데모가
-        // 끝없이 늘어지지 않게 함 (클릭을 전혀 안 해도 결국 승리 화면을 보게 됨)
+        // 안전장치: 층별로 정해둔 시간(_battleSafetyMs)이 지나도 승부가 안 나면 강제로
+        // 몬스터를 쓰러뜨려서 데모가 끝없이 늘어지지 않게 함 (클릭을 전혀 안 해도 결국
+        // 승리 화면을 보게 됨)
         this._safetyTimer = setTimeout(() => {
             if (this._battleRunning) {
                 this.bossHp = 0;
                 this._checkBattleEnd();
             }
-        }, 90000);
+        }, this._battleSafetyMs || 90000);
         this._timers.push(this._safetyTimer);
     }
 
