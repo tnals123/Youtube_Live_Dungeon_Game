@@ -71,8 +71,12 @@ window.addEventListener('load', () => {
     console.log(`🎮 Dungeon Raid - 폰트/던전 설정 로딩 중...`);
 
     const fontsReady = document.fonts.ready;
+    // 실서버(Flask)가 있으면 /api/dungeon_meta로 받고, 없는 정적 배포(GitHub Pages의
+    // demo.html 등)에서는 이 fetch가 404/네트워크 에러로 실패하므로 미리 만들어둔
+    // 정적 사본(assets/demo/dungeon_meta.json)으로 폴백한다
     const metaReady = fetch('/api/dungeon_meta')
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error('no /api/dungeon_meta (static hosting)'); return r.json(); })
+        .catch(() => fetch('assets/demo/dungeon_meta.json').then(r => r.json()))
         .then(meta => {
             window.dungeonSounds = meta.sounds || {};
             window.dungeonMinPlayers = meta.min_players || 1;

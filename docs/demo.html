@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>던전 레이드 - 솔로 데모</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @font-face {
+            font-family: 'DungGeunMo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SeoulNamsan';
+            src: url('assets/fonts/SeoulNamsanB.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SeoulNamsanEB';
+            src: url('assets/fonts/SeoulNamsanEB.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+        }
+
+        .font-preload { position: absolute; left: -9999px; visibility: hidden; }
+
+        html, body {
+            background: #0a0a0a;
+            min-height: 100%;
+        }
+
+        body {
+            font-family: 'SeoulNamsan', 'DungGeunMo', monospace;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px 28px;
+            gap: 12px;
+        }
+
+        header {
+            text-align: center;
+            max-width: 480px;
+        }
+
+        header h1 {
+            font-family: 'DungGeunMo', monospace;
+            font-size: 20px;
+            color: #FFD700;
+            text-shadow: 0 0 8px rgba(255,215,0,0.35);
+            margin-bottom: 6px;
+        }
+
+        header p {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.6;
+        }
+
+        header a { color: #6EC1FF; text-decoration: none; }
+        header a:hover { text-decoration: underline; }
+
+        #stage-wrap {
+            width: min(94vw, 440px);
+            aspect-ratio: 1080 / 1920;
+            background: #000;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0,0,0,0.7), inset 0 0 2px rgba(255,255,255,0.08);
+            border: 3px solid #2a2a2a;
+        }
+
+        #game-container { width: 100%; height: 100%; }
+
+        #demo-controls {
+            width: min(94vw, 440px);
+            min-height: 74px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(20, 16, 10, 0.9);
+            border: 2px solid #8B7355;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        #demo-controls.visible { display: flex; }
+
+        .demo-hint {
+            font-size: 13px;
+            color: #FFE9C9;
+            text-align: center;
+        }
+
+        .demo-btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .demo-btn {
+            font-family: 'SeoulNamsanEB', 'SeoulNamsan', monospace;
+            font-size: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 2px solid #FFD700;
+            background: linear-gradient(180deg, #3a2f1a, #1c1608);
+            color: #FFD700;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.15s;
+        }
+
+        .demo-btn:hover:not(:disabled) {
+            background: linear-gradient(180deg, #4a3d24, #2a2210);
+            transform: translateY(-1px);
+        }
+
+        .demo-btn:active:not(:disabled) { transform: translateY(1px); }
+
+        .demo-btn:disabled { opacity: 0.35; cursor: default; }
+
+        footer {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            max-width: 440px;
+        }
+        footer a { color: #6EC1FF; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="font-preload" style="font-family: 'DungGeunMo';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsan';">.</div>
+    <div class="font-preload" style="font-family: 'SeoulNamsanEB';">.</div>
+
+    <header>
+        <h1>🏰 던전 레이드 - 솔로 데모</h1>
+        <p>
+            서버 없이 브라우저에서 바로 진행되는 1인용 체험판입니다.<br>
+            실제 라이브 버전은 유튜브 실시간 채팅으로 시청자 수십~수백 명이<br>
+            함께 파티를 이뤄 던전을 공략합니다.
+        </p>
+    </header>
+
+    <div id="stage-wrap">
+        <div id="game-container"></div>
+    </div>
+
+    <div id="demo-controls"></div>
+
+    <footer>
+        전체 소스 코드 · 실시간(라이브) 버전 안내는
+        <a href="https://github.com/tnals123/Youtube_Live_Dungeon_Game" target="_blank" rel="noopener">GitHub 저장소</a>에서 확인할 수 있습니다.
+    </footer>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
+    <!-- Game Code -->
+    <script src="js/i18n.js"></script>
+    <script src="js/monsterAnim.js"></script>
+    <script src="js/bgmManager.js"></script>
+    <script src="js/vfxManager.js"></script>
+    <script src="js/formation.js"></script>
+    <script src="js/joinCard.js"></script>
+    <script src="js/localGameMaster.js"></script>
+    <script src="js/scenes/LobbyScene.js"></script>
+    <script src="js/scenes/DungeonEntryScene.js"></script>
+    <script src="js/scenes/ExploreScene.js"></script>
+    <script src="js/scenes/BattleScene.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/demoUI.js"></script>
+
+    <script>
+        // Phaser 게임 인스턴스(game.js가 만듦)가 준비되는 대로 데모 각본을 시작한다
+        (function waitAndStart() {
+            const check = setInterval(() => {
+                if (window.game && window.gameSocket) {
+                    clearInterval(check);
+                    setTimeout(() => window.gameSocket.start(), 500);
+                }
+            }, 100);
+        })();
+    </script>
+</body>
+</html>
