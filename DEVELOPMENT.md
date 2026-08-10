@@ -18,8 +18,9 @@ backend/
   server.py            # 단일 파일 서버: Flask + SocketIO + 게임 루프 + 에디터 API
   dungeons/
     dark_catacomb.json # 던전 데이터 (에디터가 저장, 서버가 리로드)
-frontend/
+docs/                  # (구 frontend/ - GitHub Pages가 /docs 폴더만 인식해서 이름 변경)
   index.html           # 개발용 (디버그 패널 + 미리보기 크기 선택)
+  demo.html            # 서버 없이 혼자 플레이하는 정적 데모 (GitHub Pages용)
   stream.html          # OBS 송출용 ⚠️ 스크립트 목록을 index.html과 항상 동기화할 것
   tool.html            # 던전 에디터 (층 구성/전투/탐험/애니메이션/배치)
   js/

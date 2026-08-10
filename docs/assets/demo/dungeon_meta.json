@@ -1,0 +1,366 @@
+{
+  "min_players": 5,
+  "sounds": {
+    "lobby_bgm": "theme/004 Personality Test (PMD Blue Rescue Team OST).mp3",
+    "lobby_bgm_volume": 0.68,
+    "entry_bgm": "theme/011 Insert Title (PMD Blue Rescue Team OST).mp3",
+    "entry_bgm_volume": 0.4,
+    "warrior_attack_sfx": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      "전사공격3.wav"
+    ],
+    "warrior_attack_sfx_uncommon": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_rare": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_epic": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_legendary": [
+      "전사공격1.wav",
+      "전사공격2.wav",
+      ""
+    ],
+    "warrior_attack_sfx_volume": [
+      0.98,
+      0.98,
+      0.98
+    ],
+    "floor_clear_sfx": "2.wav",
+    "archer_attack_sfx": [
+      "궁수공격1.wav",
+      "궁수공격2.wav",
+      "궁수공격3.wav"
+    ],
+    "archer_attack_sfx_volume": [
+      1.39,
+      1.39,
+      1.3
+    ],
+    "mage_attack_sfx": [
+      "법사공격1.wav",
+      "법사공격2.wav"
+    ],
+    "mage_attack_sfx_volume": [
+      0.49,
+      0.57
+    ],
+    "join_sfx_rare": "희귀참가.wav",
+    "join_sfx_uncommon": "일반참가.wav",
+    "join_sfx_common": "일반참가.wav",
+    "join_sfx_epic": "에픽참가.wav",
+    "join_sfx_legendary": "전설출현.wav"
+  },
+  "sound_files": [],
+  "skill_vfx": {
+    "힐": {
+      "self": {
+        "common": {
+          "file": "힐러/vfx/Heal Effect Sprite Sheet.png",
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "frameRate": 12,
+          "scale": 1.8,
+          "offsetX": -34,
+          "offsetY": -200,
+          "depth": "behind",
+          "sound": "힐러정화1.wav",
+          "sound_volume": 0.1
+        },
+        "uncommon": {}
+      },
+      "boss": {
+        "common": {}
+      }
+    },
+    "역산": {
+      "action": "magic_up",
+      "self": {
+        "sound": "역산1.wav"
+      }
+    },
+    "정화": {
+      "self": {
+        "common": {
+          "file": "힐러/vfx/Attack effect.png",
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "frameRate": 12,
+          "scale": 1.8,
+          "offsetX": -34,
+          "offsetY": -200,
+          "sound": "힐러정화1.wav",
+          "sound_volume": 0.1
+        }
+      },
+      "boss": {
+        "common": {
+          "file": "힐러/vfx/힐러정화.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 337,
+          "scale": 1.8,
+          "randomOffsetX": 20,
+          "randomOffsetY": 20
+        }
+      }
+    },
+    "퇴격": {
+      "self": {
+        "common": {
+          "sound": "퇴각1.wav"
+        }
+      },
+      "action": "roll"
+    },
+    "강타": {
+      "self": {
+        "common": {
+          "frameSize": 148,
+          "cols": 6,
+          "rows": 1,
+          "frameRate": 15,
+          "frameHeight": 32,
+          "scale": 2
+        },
+        "uncommon": {},
+        "legendary": {
+          "plist": false,
+          "frameRate": 12,
+          "frameSize": 128,
+          "cols": 4,
+          "rows": 4,
+          "offsetY": 357
+        },
+        "rare": {},
+        "epic": {}
+      },
+      "boss": {
+        "common": {
+          "file": "전사/vfx/전사공격2.png",
+          "frameSize": 148,
+          "cols": 6,
+          "rows": 1,
+          "frameRate": 15,
+          "frameHeight": 32,
+          "scale": 2.5,
+          "randomOffsetX": 30,
+          "randomOffsetY": 30,
+          "offsetY": 350,
+          "plist": true
+        },
+        "uncommon": {
+          "file": "전사/vfx/전사고급공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "rare": {
+          "file": "전사/vfx/전사희귀공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "epic": {
+          "file": "전사/vfx/전사영웅공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 2.5
+        },
+        "legendary": {
+          "file": "전사/vfx/전사전설공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 338,
+          "scale": 2.8,
+          "hitFrames": [
+            4,
+            6,
+            9,
+            11,
+            13,
+            14,
+            15,
+            23
+          ],
+          "hitStopEnabled": true,
+          "shakeIntensity": 0.004,
+          "sound": "전사전설공격2.wav",
+          "sound_volume": 1.41,
+          "hitStopMs": 80,
+          "hitStopFrames": [
+            4,
+            6,
+            9,
+            11,
+            13,
+            14,
+            15,
+            23
+          ]
+        }
+      }
+    },
+    "저격": {
+      "self": {
+        "common": {},
+        "uncommon": {}
+      },
+      "boss": {
+        "common": {
+          "file": "궁수/vfx/궁수공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "uncommon": {
+          "file": "궁수/vfx/궁수고급공격2.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "rare": {
+          "file": "궁수/vfx/궁수희귀공격1.png",
+          "plist": true,
+          "frameRate": 15,
+          "offsetY": 350,
+          "scale": 2.05,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "triggerFrame": 12
+        },
+        "epic": {
+          "file": "궁수/vfx/궁수에픽공격1.png",
+          "plist": true,
+          "frameRate": 12,
+          "scale": 2.05,
+          "offsetY": 357,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50
+        },
+        "legendary": {
+          "file": "마법사/vfx/궁수전설1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 337,
+          "scale": 3,
+          "hitFrames": [
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "sound": "궁수전설공격1.wav",
+          "sound_volume": 1.58
+        }
+      }
+    },
+    "파이어볼": {
+      "self": {
+        "common": {},
+        "uncommon": {},
+        "rare": {},
+        "epic": {},
+        "legendary": {}
+      },
+      "boss": {
+        "common": {
+          "file": "마법사/vfx/법사파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 357,
+          "scale": 2.3,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50
+        },
+        "uncommon": {
+          "file": "마법사/vfx/법사파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 3
+        },
+        "rare": {
+          "file": "궁수/vfx/법사공격1.png",
+          "plist": true,
+          "frameRate": 12,
+          "offsetY": 357,
+          "triggerFrame": 6,
+          "randomOffsetX": 50,
+          "scale": 2.4,
+          "randomOffsetY": 50
+        },
+        "epic": {
+          "file": "마법사/vfx/법사파이어볼2.png",
+          "plist": true,
+          "frameRate": 12,
+          "randomOffsetX": 50,
+          "randomOffsetY": 50,
+          "offsetY": 357,
+          "scale": 1.8
+        },
+        "legendary": {
+          "file": "전사/vfx/법사전설파이어볼1.png",
+          "plist": true,
+          "frameRate": 12,
+          "sound": "법사전설사운드1.wav",
+          "sound_volume": 0.51,
+          "offsetY": 247,
+          "scale": 2.45,
+          "hitFrames": [
+            15
+          ],
+          "hitStopFrames": [
+            14
+          ]
+        }
+      },
+      "action": "fireball"
+    },
+    "방어": {
+      "self": {
+        "common": {}
+      }
+    }
+  },
+  "language": "en"
+}

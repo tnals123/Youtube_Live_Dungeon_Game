@@ -15,7 +15,7 @@ import os
 import uuid
 
 # ============ Flask 앱 설정 ============
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+app = Flask(__name__, static_folder='../docs', static_url_path='')
 app.config['SECRET_KEY'] = 'dungeon-raid-secret-key'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
@@ -1640,11 +1640,11 @@ def reset_lobby():
 # ============ 라우트 ============
 @app.route('/')
 def index():
-    return send_from_directory('../frontend', 'index.html')
+    return send_from_directory('../docs', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    return send_from_directory('../frontend', path)
+    return send_from_directory('../docs', path)
 
 # 테스트용 API
 @app.route('/api/test/join/<name>')
@@ -1682,8 +1682,8 @@ def test_join_grade(grade):
     return "Already joined", 400
 
 # ============ 던전 에디터 툴 API (개발용) ============
-MONSTERS_DIR = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'assets', 'monsters')
-SOUNDS_DIR = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'assets', 'sounds')
+MONSTERS_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs', 'assets', 'monsters')
+SOUNDS_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs', 'assets', 'sounds')
 
 @app.route('/api/tool/dungeon')
 def api_tool_dungeon():
@@ -1722,7 +1722,7 @@ def api_tool_sounds():
                     sounds.append(rel_path.replace(os.sep, '/'))
     return json.dumps(sorted(sounds), ensure_ascii=False), 200
 
-SPRITESHEETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'assets', 'spritesheets')
+SPRITESHEETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs', 'assets', 'spritesheets')
 
 @app.route('/api/tool/vfx_sprites')
 def api_tool_vfx_sprites():
@@ -1748,7 +1748,7 @@ def api_tool_vfx_sprites():
     sprites.sort(key=lambda s: s['file'])
     return json.dumps(sprites, ensure_ascii=False), 200
 
-ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'assets')
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), '..', 'docs', 'assets')
 
 def sanitize_asset_path(rel_path, exts=('.png',)):
     """assets/ 하위 저장 경로 검증: '..'나 절대경로로 assets/ 밖에 못 나가게 막고,
