@@ -76,7 +76,9 @@ window.addEventListener('load', () => {
     // 정적 사본(assets/demo/dungeon_meta.json)으로 폴백한다
     const metaReady = fetch('/api/dungeon_meta')
         .then(r => { if (!r.ok) throw new Error('no /api/dungeon_meta (static hosting)'); return r.json(); })
-        .catch(() => fetch('assets/demo/dungeon_meta.json').then(r => r.json()))
+        // 캐시 버스터(?v=타임스탬프) - GitHub Pages/브라우저가 이 정적 JSON을 오래 캐싱해두면
+        // 던전 설정(언어·사운드 목록 등)을 고쳐도 한동안 예전 값이 계속 나올 수 있어서 방지
+        .catch(() => fetch('assets/demo/dungeon_meta.json?v=' + Date.now()).then(r => r.json()))
         .then(meta => {
             window.dungeonSounds = meta.sounds || {};
             window.dungeonMinPlayers = meta.min_players || 1;

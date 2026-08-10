@@ -60,7 +60,33 @@
     "join_sfx_epic": "에픽참가.wav",
     "join_sfx_legendary": "전설출현.wav"
   },
-  "sound_files": [],
+  "sound_files": [
+    "2.wav",
+    "5.wav",
+    "theme/004 Personality Test (PMD Blue Rescue Team OST).mp3",
+    "theme/011 Insert Title (PMD Blue Rescue Team OST).mp3",
+    "theme/012 Thunderwave Cave (PMD Blue Rescue Team OST).mp3",
+    "theme/068 - Dialgas Fight to the Finish! - (Pokémon Mystery Dungeon - Explorers of Sky).mp3",
+    "궁수공격1.wav",
+    "궁수공격2.wav",
+    "궁수공격3.wav",
+    "던전소리1.wav",
+    "바닥무너짐1.wav",
+    "법사공격1.wav",
+    "법사공격2.wav",
+    "스크라벤공격1.wav",
+    "스크라벤대기모션1.wav",
+    "에픽참가.wav",
+    "일반참가.wav",
+    "전사공격1.wav",
+    "전사공격2.wav",
+    "전사공격3.wav",
+    "전설출현.wav",
+    "텔레그래프사운드1.wav",
+    "플러그공격.wav",
+    "플러그죽음1.wav",
+    "희귀참가.wav"
+  ],
   "skill_vfx": {
     "힐": {
       "self": {

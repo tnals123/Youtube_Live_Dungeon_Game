@@ -56,6 +56,11 @@ const SCRAVEN_PATTERN = {
     telegraph_anim: 'idle',
     resolve_anim: 'attack3',
     success_anim: 'hit',
+    // 실제 JSON에 있던 사운드 필드 - 처음 옮겨 적을 때 빠뜨렸던 부분 (텔레그래프 무음 버그의 원인)
+    telegraph_sfx: '텔레그래프사운드1.wav',
+    telegraph_sfx_volume: 1.28,
+    telegraph_loop_sound: '스크라벤대기모션1.wav',
+    telegraph_loop_sound_volume: 1.28,
     pattern_interval_sec: 12,  // JSON에 없으면 서버 기본값 12초
     attack_interval_sec: 4
 };
@@ -397,9 +402,15 @@ class LocalGameMaster {
             legendary: LGM_GRADES.legendary, epic: LGM_GRADES.epic, rare: LGM_GRADES.rare
         }));
 
-        const botCount = 6;
+        const botCount = 10;
+        // 역할군당 최소 2명은 보장 (4역할 x 2 = 8명), 나머지는 실서버와 같은 가중치로 랜덤 배정
+        const roleDraft = [];
+        Object.keys(LGM_ROLES).forEach(r => { roleDraft.push(r, r); });
+        while (roleDraft.length < botCount) roleDraft.push(lgmWeightedPick(LGM_ROLES));
+        roleDraft.sort(() => Math.random() - 0.5);  // 참가 순서가 역할별로 뭉쳐 보이지 않게 섞기
+
         const shuffledNames = [...LGM_BOT_NAMES].sort(() => Math.random() - 0.5).slice(0, botCount);
-        this.bots = shuffledNames.map((name, i) => lgmMakeUnit(name, 'demo_bot_' + i));
+        this.bots = shuffledNames.map((name, i) => lgmMakeUnit(name, 'demo_bot_' + i, roleDraft[i]));
 
         // 다른 시청자(봇)들은 곧바로 채팅으로 참가하기 시작 - 화면이 살아있다는 걸 바로 보여줌
         const joinYou = () => {
