@@ -17,10 +17,13 @@
  */
 
 // ============ 게임 상수 (backend/server.py의 ROLES/GRADES/ATTACK_SKILLS와 동일) ============
+// util* 필드는 실서버의 UTIL_SKILL_ROLES(보스 패턴 파훼 전용 명령어) - 이 데모의 1층은
+// 패턴 없는 일반 전투라 실제 파훼 게이지는 없지만, 버튼을 누르면 "다음 몬스터 공격 피해
+// 절반 감소" 효과를 줘서 방어 커맨드도 의미 있게 눌러볼 수 있게 했다
 const LGM_ROLES = {
-    warrior: { name: '전사', emoji: '⚔️', weight: 35, attackCmd: '/강타', attackLabel: '강타', coef: 1.2 },
-    archer:  { name: '궁수', emoji: '🏹', weight: 30, attackCmd: '/저격', attackLabel: '저격', coef: 1.2 },
-    mage:    { name: '마법사', emoji: '🔮', weight: 20, attackCmd: '/파이어볼', attackLabel: '파이어볼', coef: 1.3 },
+    warrior: { name: '전사', emoji: '⚔️', weight: 35, attackCmd: '/강타', attackLabel: '강타', coef: 1.2, utilCmd: '/방어', utilIcon: '🛡️' },
+    archer:  { name: '궁수', emoji: '🏹', weight: 30, attackCmd: '/저격', attackLabel: '저격', coef: 1.2, utilCmd: '/퇴격', utilIcon: '💨' },
+    mage:    { name: '마법사', emoji: '🔮', weight: 20, attackCmd: '/파이어볼', attackLabel: '파이어볼', coef: 1.3, utilCmd: '/역산', utilIcon: '🌀' },
     healer:  { name: '힐러', emoji: '💚', weight: 15, attackCmd: '/정화', attackLabel: '정화', coef: 0.8 }
 };
 
@@ -89,6 +92,7 @@ class LocalGameMaster {
         this.bossMaxHp = 0;
         this._battleRunning = false;
         this._lastClickAt = 0;
+        this._shielded = false;
         this._exploreTally = {};
     }
 
@@ -261,6 +265,16 @@ class LocalGameMaster {
         this._safe('attack_batch', () => {
             const scene = this.getActiveScene();
             if (scene && scene.showAttackBatch) scene.showAttackBatch(data);
+        });
+    }
+
+    // 방어/역산/퇴격처럼 몬스터 HP를 안 깎는 유틸 스킬 - 진형 스프라이트에 동작 애니메이션만 재생
+    _fireSkillUsed(data) {
+        this._safe('skill_used', () => {
+            const scene = this.getActiveScene();
+            if (scene && scene.formation) {
+                scene.formation.playAttack(data.user_id, (data.command || '').replace(/^\//, ''));
+            }
         });
     }
 
@@ -637,10 +651,20 @@ class LocalGameMaster {
 
     _monsterAttackFn() {
         if (!this._battleRunning) return;
-        const pct = 6.7; // no_heal_wipe_sec(60) / attack_interval_sec(4) = 15회 → 100/15 ≈ 6.7%
+        let pct = 6.7; // no_heal_wipe_sec(60) / attack_interval_sec(4) = 15회 → 100/15 ≈ 6.7%
+
+        // 방어/역산/퇴격 버튼으로 미리 방어 태세였다면 이번 공격 피해를 절반으로 줄인다
+        // (실서버의 "패턴 파훼 성공" 개념을 1층 일반 전투용으로 단순화한 것)
+        if (this._shielded) {
+            pct = Math.round(pct / 2 * 10) / 10;
+            this._shielded = false;
+            this._chatSystem('🛡️ 방어 태세 덕분에 피해가 절반으로 줄었다!');
+        } else {
+            this._chatSystem('💢 플러그의 반격! 파티가 피해를 입었다');
+        }
+
         const damage = Math.round(this.partyMaxHp * (pct / 100));
         this.partyHp = Math.max(0, this.partyHp - damage);
-        this._chatSystem('💢 플러그의 반격! 파티가 피해를 입었다');
 
         this._fireMonsterAttack({
             text: '플러그가 전기를 내뿜습니다!',
@@ -662,7 +686,14 @@ class LocalGameMaster {
 
         const role = LGM_ROLES[this.you.role];
 
-        if (cmd === 'heal') {
+        if (cmd === 'defend') {
+            // 공격/힐과 달리 몬스터 HP나 파티 HP를 즉시 바꾸지 않고, 다음 몬스터 공격을
+            // 절반으로 줄이는 방어 태세만 켠다 (_monsterAttackFn에서 소모됨)
+            this._shielded = true;
+            this._chat('당신', role.utilCmd, { you: true });
+            this._chatSystem('🛡️ 당신이 방어 태세를 취했다! 다음 공격 피해 감소');
+            this._fireSkillUsed({ user_id: this.you.user_id, command: role.utilCmd });
+        } else if (cmd === 'heal') {
             const amount = Math.round(LGM_GRADES[this.you.grade].multiplier * (8 + Math.random() * 6));
             this.partyHp = Math.min(this.partyMaxHp, this.partyHp + amount);
             this.you.totalHeal += amount;

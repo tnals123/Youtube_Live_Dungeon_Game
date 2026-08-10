@@ -79,7 +79,7 @@
         #game-container { width: 100%; height: 100%; }
 
         #demo-controls {
-            width: min(94vw, 440px);
+            width: 100%;
             min-height: 74px;
             display: none;
             flex-direction: column;
@@ -153,10 +153,18 @@
             gap: 12px;
         }
 
+        .chat-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: min(300px, 94vw);
+        }
+
         /* ===== 가짜 유튜브 라이브 채팅 ===== */
         #chat-panel {
-            width: min(300px, 94vw);
-            height: min(72vh, 660px);
+            width: 100%;
+            height: min(60vh, 560px);
             background: #0f0f0f;
             border: 2px solid #303030;
             border-radius: 12px;
@@ -261,12 +269,14 @@
             <div id="stage-wrap">
                 <div id="game-container"></div>
             </div>
-            <div id="demo-controls"></div>
         </div>
 
-        <div id="chat-panel">
-            <div id="chat-header"><span class="dot"></span> 실시간 채팅 (재현)</div>
-            <div id="chat-messages"></div>
+        <div class="chat-col">
+            <div id="chat-panel">
+                <div id="chat-header"><span class="dot"></span> 실시간 채팅 (재현)</div>
+                <div id="chat-messages"></div>
+            </div>
+            <div id="demo-controls"></div>
         </div>
     </div>
 

@@ -66,13 +66,23 @@ window.DemoUI = {
     },
 
     showSkillButton(you, onAct) {
-        const role = you.role;
-        const buttons = role === 'healer'
-            ? [{ label: '💚 힐 사용', act: 'heal' }, { label: '🌿 정화 사용', act: 'attack' }]
-            : [{ label: `${{warrior:'🗡️',archer:'🎯',mage:'🔥'}[role]} ${{warrior:'강타',archer:'저격',mage:'파이어볼'}[role]} 사용`, act: 'attack' }];
+        // LGM_ROLES는 localGameMaster.js가 먼저 로딩되면서 전역(스크립트 스코프)에
+        // 선언해둔 상수 - 공격/방어 커맨드·아이콘을 여기서 그대로 가져다 쓴다
+        const role = LGM_ROLES[you.role];
+        const attackIcon = { warrior: '🗡️', archer: '🎯', mage: '🔥' }[you.role];
+
+        const buttons = you.role === 'healer'
+            ? [
+                { label: '💚 힐 사용', act: 'heal' },
+                { label: '🌿 정화 사용', act: 'attack' }
+              ]
+            : [
+                { label: `${attackIcon} ${role.attackLabel} 사용`, act: 'attack' },
+                { label: `${role.utilIcon} ${role.utilCmd.slice(1)} 사용 (방어)`, act: 'defend' }
+              ];
 
         this._show(`
-            <div class="demo-hint">당신은 <b>${you.grade_name} ${you.role_name}</b>입니다! 버튼을 눌러 몬스터를 공격하세요</div>
+            <div class="demo-hint">당신은 <b>${you.grade_name} ${you.role_name}</b>입니다! 공격하거나 방어해보세요</div>
             <div class="demo-btn-row">
                 ${buttons.map((b, i) => `<button class="demo-btn demo-btn-skill" data-act="${b.act}">${b.label}</button>`).join('')}
             </div>
